@@ -1,4 +1,4 @@
-module Tests where
+module Main where
 
 import Test.Framework (defaultMain, testGroup)
 import Test.Framework.Providers.HUnit
@@ -15,15 +15,10 @@ import Data.Maybe
 main :: IO ()
 main = defaultMain tests
 
-
-
 tests =
   [ testGroup "Starting position tests" startingTests
   , testGroup "Basic solver tests" solverTests
   ]
-
-
-
 
 startingTests =
   [ testCase "# of moves in starting position" test_moves_length1
@@ -49,6 +44,8 @@ test_do_pass_move =
         "Pass move should not remove pieces from board"
         (piecesCount new)
         (piecesCount r2)
+
+
 
 solverTests =
   [ testCase "# of losing opening moves (d=3)" test_losing_moves_d3

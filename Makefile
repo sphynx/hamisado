@@ -5,13 +5,12 @@ all: build run
 profile:
 	ghc -O2 -prof -fforce-recomp -fprof-auto -rtsopts Kamisado.hs
 	./Kamisado +RTS -p
-	awk "$7 > 3" Kamisado.prof
+	awk '$$7 > 3' Kamisado.prof
 
 heap:
-	./$(PROG) +RTS -hT -i0.05 || true
+	./$(PROG) +RTS -hy -i0.05 || true
 	hp2pretty $(PROG).hp >$(PROG).svg
-	rsvg $(PROG).svg $(PROG).png
-	feh $(PROG).png
+	rsvg-view-3 $(PROG).svg
 
 build:
 	ghc -O2 Kamisado.hs
@@ -22,5 +21,9 @@ rebuild:
 run:
 	./Kamisado
 
+test:
+	ghc -O2 Tests.hs
+	./Tests
+
 clean:
-	rm -v -f *.hi *.o Kamisado Dia
+	rm -v -f *.hi *.o Kamisado Tests
