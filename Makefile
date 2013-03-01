@@ -27,3 +27,6 @@ test:
 
 clean:
 	rm -v -f *.hi *.o Kamisado Tests
+
+clean-data:
+	rm -v -f Kamisado.hp Kamisado.prof Kamisado.png Kamisado.svg

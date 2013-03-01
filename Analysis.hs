@@ -1,6 +1,4 @@
 {-# LANGUAGE RecordWildCards #-}
-{-# OPTIONS_GHC -Wall #-}
-
 
 module Analysis
  ( solve

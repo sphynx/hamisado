@@ -1,3 +1,5 @@
+{-# OPTIONS_GHC -fno-warn-missing-signatures #-}
+
 module Main where
 
 import Test.Framework (defaultMain, testGroup)
