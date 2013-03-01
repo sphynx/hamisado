@@ -55,22 +55,15 @@ doMove m r@Round {..} = Round
   , rPlayer = alternate rPlayer
   }
 
--- M7, checking for the win.
 roundResult :: Round -> RoundResult
 roundResult Round{..}
-  | reachedOpponentRow || isDeadlock = Winner player
-  | otherwise                        = InProgress
+  | reachedHomeRow || isDeadlock = Winner (alternate rPlayer)
+  | otherwise                    = InProgress
 
   where
-    -- player who has just moved, not a player "to move" from Round
-    player = alternate rPlayer
-
-    reachedOpponentRow
-      = any (`belongsToPlayer` player)
-      $ rankPieces rBoard
-      $ opponentHomeRow player
-
-    piece `belongsToPlayer` plr = pPlayer piece == plr
+    reachedHomeRow = case rMoves of
+      [] -> False
+      Move _ to :_ -> snd to == homeRow rPlayer
 
     isDeadlock = case rMoves of
       m:pm:_ -> isPass m && isPass pm
@@ -183,15 +176,9 @@ colorOfToField b (Move _ to) = fColor $ b ! to
 isPass :: Move -> Bool
 isPass (Move from to) = from == to
 
-rankPieces :: Board -> Int -> [Piece]
-rankPieces b r = catMaybes [fPiece $ b ! (f, r) | f <- [1..8]]
-
 homeRow :: Player -> Int
 homeRow White = 8
 homeRow Black = 1
-
-opponentHomeRow :: Player -> Int
-opponentHomeRow = homeRow . alternate
 
 forward :: Int -> Round -> [Round]
 forward 0 r = [r]
