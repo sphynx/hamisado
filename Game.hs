@@ -187,7 +187,11 @@ homeRow White = 8
 forward :: Int -> Round -> [Round]
 forward 0 r = [r]
 forward d r =
-  [ doMove m r | m <- genMoves r ] >>= forward (d - 1)
+  [ doMove m r | m <- sortMoves $ genMoves r ] >>= forward (d - 1)
+  where
+  sortMoves =
+    -- Put longer moves first, since they are typically more forcing.
+    sortBy (\(Move _ (_,y1)) (Move _ (_,y2)) -> compare y2 y1)
 
 next :: Round -> [Round]
 next = forward 1
