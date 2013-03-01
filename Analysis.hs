@@ -21,7 +21,7 @@ data SolvingResult =
   deriving (Eq, Show)
 
 solve :: Int -> Round -> SolvingResult
-solve _ Round{rResult = Winner p} = Solved p ()
+solve _ r | Winner p <- roundResult r = Solved p ()
 solve 0 _ = Unknown 0
 solve depth r =
   let i = rPlayer r

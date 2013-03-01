@@ -1,7 +1,5 @@
 {-# LANGUAGE RecordWildCards #-}
 
-{-# OPTIONS_GHC -Wall #-}
-
 module Game
   ( start       -- starting position
   , doMove      -- do move{,s}
@@ -10,16 +8,8 @@ module Game
   , next        -- generate list of moves applied to positions (1 ply or more)
   , forward
   , roundResult -- is terminal?
-
-
-  -- Function exported for testing
-  , between
-  , playerPiecesCoords
-
   ) where
 
-import Control.Arrow
-import Control.Monad
 import Data.Array
 import Data.List
 import Data.Maybe
@@ -27,7 +17,7 @@ import Data.Maybe
 import Types
 
 board0 :: Board
-board0 = listArray ((A,1), (H,8)) $ concat $ transpose $
+board0 = listArray ((1,1), (8,8)) $ concat $ transpose $
   [ [ filled minBound c | c <- colors ]
   , [ empty c | c <- [Purple, Brown, Yellow, Blue, Green, Pink, Orange, Red]]
   , [ empty c | c <- [Blue, Yellow, Brown, Purple, Red, Orange, Pink, Green]]
@@ -48,63 +38,47 @@ start = Round
   { rBoard  = board0
   , rPlayer = Black
   , rMoves  = []
-  , rResult = InProgress
   }
 
 doMoves :: [Move] -> Round -> Round
 doMoves (m:ms) r =
   let r' = doMove m r
-  in case rResult r' of
+  in case roundResult r' of
        InProgress -> doMoves ms r'
        _          -> r'
 doMoves [] r = r
 
 doMove :: Move -> Round -> Round
 doMove m r@Round {..} = Round
-  { rBoard  = updatedBoard
-  , rMoves  = updatedMoves
+  { rBoard  = updateBoard m r
+  , rMoves  = m : rMoves
   , rPlayer = alternate rPlayer
-  , rResult = roundResult updatedBoard updatedMoves rPlayer
   }
-  where updatedBoard = move m r
-        updatedMoves = m : rMoves
 
 -- M7, checking for the win.
-roundResult :: Board -> [Move] -> Player -> RoundResult
-roundResult board moves player -- player who moved in current round
+roundResult :: Round -> RoundResult
+roundResult Round{..}
   | reachedOpponentRow || isDeadlock = Winner player
   | otherwise                        = InProgress
 
   where
+    -- player who has just moved, not a player "to move" from Round
+    player = alternate rPlayer
+
     reachedOpponentRow
       = any (`belongsToPlayer` player)
-      $ rankPieces board
+      $ rankPieces rBoard
       $ opponentHomeRow player
 
     piece `belongsToPlayer` plr = pPlayer piece == plr
 
-    isDeadlock = case moves of
+    isDeadlock = case rMoves of
       m:pm:_ -> isPass m && isPass pm
       _      -> False
 
-move :: Move -> Round -> Board
-move m@(Move from to) r
-  | isPass m && (not $ hasAnyMoves from r) = rBoard r
-  |
-    -- M5 and M6. We should move if possible, we should pass
-    -- otherwise. We check this here (not in isValidMove), because we
-    -- use isValidMove to generate possible moves and we do not want
-    -- cyclic dependencies.
-    isPass m /= hasAnyMoves from r
-    -- Pass and does not have moves - OK
-    -- Normal move and have moves   - OK
-    -- Pass, but have moves         - NO
-    -- Normal move, but does not have moves - NO
-
-    -- Move should be valid or should be a pass (which is not valid by default)
-    -- This is confusing.
-    && (isValidMove m r || isPass m) = --- FIXME: think about these checks, it's ugly now
-
+updateBoard :: Move -> Round -> Board
+updateBoard m r | isPass m   = rBoard r
+updateBoard (Move from to) r =
   let b = rBoard r
       Field fromColor fromPiece = b ! from
       Field toColor   _         = b ! to
@@ -112,53 +86,23 @@ move m@(Move from to) r
           , (from, Field fromColor Nothing)
           ]
 
-move m _ = error $ "Wrong or unsupported move: " ++ show m
+genForwardMoves :: Coord -> Player -> [Coord]
+genForwardMoves (x,y) p = case p of
+  Black ->
+       [ (x,  y+i) | i <- [1 .. 8-y]]               -- straight up
+    ++ [ (x-i,y+i) | i <- [1 .. min (x-1) (8-y)] ]  -- left up
+    ++ [ (x+i,y+i) | i <- [1 .. min (8-x) (8-y)] ]  -- right up
+  White ->
+       [ (x,  y-i) | i <- [1 .. y-1] ]              -- straight down
+    ++ [ (x-i,y-i) | i <- [1 .. min (x-1) (y-1)] ]  -- left down
+    ++ [ (x+i,y-i) | i <- [1 .. min (8-x) (y-1)] ]  -- right down
 
-isValidMove :: Move -> Round -> Bool
-isValidMove (Move from to) Round{..} = isJust $ do
-  let (from_x, from_y) = coord2int from
-      (to_x,   to_y)   = coord2int to
-      Field _ piece = rBoard ! from
+noPiecesInBetween :: Coord -> Coord -> Board -> Bool
+noPiecesInBetween from to b =
+  all isNothing [fPiece $ b!c | c <- between from to]
 
-  -- A piece exists in from field.
-  p <- piece
-
-  -- T1. A player may move only his/her pieces.
-  guard $ pPlayer p == rPlayer
-
-  -- T2. We may move only the piece which color is matching the color
-  -- of "to" field of the previous move.
-  unless (null rMoves) $
-     guard $ colorOfToField rBoard (head rMoves) == pColor p
-
-  -- M1. Move forward (straight or diagonal).
-  guard $ forwardMovement from_x from_y to_x to_y rPlayer
-
-  -- M2. No towers in between from and to fields.
-  guard $ noPiecesInBetween from_x from_y to_x to_y rBoard
-
-  -- M3. To field is empty.
-  guard $ isNothing $ fPiece $ rBoard ! to
-
-
-forwardMovement :: Int -> Int -> Int -> Int -> Player -> Bool
-forwardMovement fx fy tx ty p = or
-  -- Black forward straight
-  [ ty > fy && tx == fx && p == Black -- up
-  -- White forward straight
-  , ty < fy && tx == fx && p == White -- down
-  -- Black forward diagonal
-  , ty > fy && (ty - fy) == abs (tx - fx) && p == Black -- up
-  -- White forward diagonal
-  , ty < fy && (fy - ty) == abs (tx - fx) && p == White -- down
-  ]
-
-noPiecesInBetween :: Int -> Int -> Int -> Int -> Board -> Bool
-noPiecesInBetween fx fy tx ty b =
-  all isNothing [fPiece $ b ! int2coord c | c <- between fx fy tx ty]
-
-between :: (Enum t, Num t, Ord t) => t -> t -> t -> t -> [(t, t)]
-between x1 y1 x2 y2
+between :: Coord -> Coord -> [Coord]
+between (x1,y1) (x2,y2)
   -- equal?
   | x1 == x2 && y1 == y2                             = []
   -- on the same line?
@@ -183,61 +127,55 @@ between x1 y1 x2 y2
 
   | otherwise = error "Should not happen"
 
-  where symmetric = between x2 y2 x1 y1
+  where symmetric = between (x2,y2) (x1,y1)
 
 possiblePieceMoves :: Coord -> Round -> [Move]
-possiblePieceMoves from r =
-  [ m
-  | c <- coords
-  , let m = Move from c
-  , isValidMove m r
+possiblePieceMoves from Round{..} =
+  [ Move from to
+  | to <- genForwardMoves from rPlayer
+  , noPiecesInBetween from to rBoard
+  , isNothing $ fPiece $ rBoard ! to
   ]
 
-hasAnyMoves :: Coord -> Round -> Bool
-hasAnyMoves from = not . null . possiblePieceMoves from
+-- hasAnyMoves :: Coord -> Round -> Bool
+-- hasAnyMoves from = not . null . possiblePieceMoves from
+
+initialFroms :: Player -> [Coord]
+initialFroms Black = [(x,1) | x <- [1..8]]
+initialFroms White = [(x,8) | x <- [1..8]]
+
+requiredFrom :: Move -> Round -> Coord
+requiredFrom lastMove Round{..} =
+  coordByColor (colorOfToField rBoard lastMove) rPlayer rBoard
+
+requiredFroms :: Round -> [Coord]
+requiredFroms r = case rMoves r of
+  []  -> initialFroms (rPlayer r)
+  m:_ -> [ requiredFrom m r ]
+
+passMove :: Round -> [Move]
+passMove r = case rMoves r of
+  []  -> []
+  m:_ -> let from = requiredFrom m r
+          in [Move from from]
 
 genMoves :: Round -> [Move]
-genMoves r@Round {..} =
-  case rResult of
-    InProgress ->
-      let ms = concat [ possiblePieceMoves from r
-                      | from <- playerPiecesCoords rPlayer rBoard
-                      ]
-      in if null ms then passMove else ms
-
-    Winner _ -> [] --- Round has finished. Where to put refill?
-
-  where
-    passMove = case rMoves of
-       m@Move{} : _ ->
-         let col = colorOfToField rBoard m
-             from = coordByColor col rPlayer rBoard
-             in [Move from from]
-       _ -> []
-
+genMoves r | Winner _ <- roundResult r = []
+genMoves r  = result where
+  moves = concat [ possiblePieceMoves from r
+                 | from <- requiredFroms r
+                 ]
+  result | null moves = passMove r
+         | otherwise  = moves
 
 coordByColor :: Color -> Player -> Board -> Coord
 coordByColor color p b = head
   [ coord
   | coord <- indices b
-  , piece <- maybeToList $ fPiece $ b ! coord
+  , Just piece <- [fPiece $ b ! coord]
   , pPlayer piece == p
   , pColor piece == color
   ]
-
-playerPiecesCoords :: Player -> Board -> [Coord]
-playerPiecesCoords p b =
-  [ coord
-  | coord <- indices b
-  , piece <- maybeToList $ fPiece $ b ! coord
-  , pPlayer piece == p
-  ]
-
-coord2int :: Coord -> (Int, Int)
-coord2int = first (succ . fromEnum)
-
-int2coord :: (Int, Int) -> Coord
-int2coord = first (toEnum . pred)
 
 colorOfToField :: Board -> Move -> Color
 colorOfToField b (Move _ to) = fColor $ b ! to
@@ -246,7 +184,7 @@ isPass :: Move -> Bool
 isPass (Move from to) = from == to
 
 rankPieces :: Board -> Int -> [Piece]
-rankPieces b r = catMaybes [fPiece $ b ! (f, r) | f <- [A .. H]]
+rankPieces b r = catMaybes [fPiece $ b ! (f, r) | f <- [1..8]]
 
 homeRow :: Player -> Int
 homeRow White = 8

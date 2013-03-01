@@ -27,6 +27,7 @@ startingTests =
   , testCase "# of positions after 2 plies" test_2_plies
   , testCase "Pass move" test_pass_move
   , testCase "Do pass move" test_do_pass_move
+  , testCase "Is terminal?" is_terminal
   ]
 
 test_moves_length1 = length (genMoves start) @?= 13*8-2
@@ -45,7 +46,7 @@ test_do_pass_move =
         (piecesCount new)
         (piecesCount r2)
 
-
+is_terminal = roundResult r4d @?= Winner White
 
 solverTests =
   [ testCase "# of losing opening moves (d=3)" test_losing_moves_d3

@@ -3,7 +3,7 @@ PROG=Kamisado
 all: build run
 
 profile:
-	ghc -O2 -prof -fforce-recomp -fprof-auto -rtsopts Kamisado.hs
+	ghc -O2 -prof -fforce-recomp -fprof-auto -rtsopts -Wall Kamisado.hs
 	./Kamisado +RTS -p
 	awk '$$7 > 3' Kamisado.prof
 
@@ -13,16 +13,16 @@ heap:
 	rsvg-view-3 $(PROG).svg
 
 build:
-	ghc -O2 Kamisado.hs
+	ghc -O2 -Wall Kamisado.hs
 
 rebuild:
-	ghc -fforce-recomp -O2 Kamisado.hs
+	ghc -fforce-recomp -O2 -Wall Kamisado.hs
 
-run:
-	./Kamisado
+run:	build
+	sh -c "time ./Kamisado"
 
 test:
-	ghc -O2 Tests.hs
+	ghc -O2 -Wall Tests.hs
 	./Tests
 
 clean:

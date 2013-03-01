@@ -2,6 +2,8 @@
 {-# LANGUAGE NoMonomorphismRestriction #-}
 {-# LANGUAGE ViewPatterns #-}
 
+{-# OPTIONS_GHC -fno-warn-missing-signatures #-}
+
 module Dia where
 
 import Data.Array

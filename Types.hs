@@ -1,6 +1,7 @@
 module Types where
 
 import Data.Array
+import Data.Char
 import Text.Printf
 
 data Color
@@ -17,15 +18,13 @@ data Color
 colors :: [Color]
 colors = [minBound .. maxBound]
 
-data File = A | B | C | D | E | F | G | H
-  deriving (Eq, Ord, Show, Enum, Bounded, Ix)
+type Coord = (Int, Int) -- 1 to 8
 
-type Rank = Int
-
-type Coord = (File, Rank)
+showFile :: Int -> String
+showFile x = return $ chr $ 64 + x -- 1 to "A", 2 to "B" etc.
 
 coords :: [Coord]
-coords = [(x, y) | x <- [A .. H], y <- [1 .. 8]]
+coords = [(x, y) | x <- [1..8], y <- [1..8]]
 
 data Player = Black | White
   deriving (Eq, Show, Enum, Bounded)
@@ -54,7 +53,6 @@ data Round = Round
   { rBoard  :: Board
   , rPlayer :: Player
   , rMoves  :: [Move]
-  , rResult :: RoundResult
   } deriving Show
 
 data RoundResult = Winner Player | InProgress deriving (Eq, Show)
@@ -73,6 +71,6 @@ data Move = Move Coord Coord deriving (Eq)
 
 instance Show Move where
   show (Move (fx,fy) (tx,ty)) =
-    printf "%s%d-%s%d" (show fx) fy (show tx) ty
+    printf "%s%d-%s%d" (showFile fx) fy (showFile tx) ty
 
 data Direction = LTR | RTL deriving (Eq, Show)
