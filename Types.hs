@@ -67,7 +67,7 @@ data PlayMethod = SingleRound | Standard | Long | Marathon deriving (Eq, Show)
 
 data GameResult = Score Int Int deriving (Eq, Show)
 
-data Move = Move Coord Coord deriving (Eq)
+data Move = Move Coord Coord deriving (Eq, Ord)
 
 instance Show Move where
   show (Move (fx,fy) (tx,ty)) =

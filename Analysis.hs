@@ -1,68 +1,89 @@
 {-# LANGUAGE RecordWildCards #-}
 
 module Analysis
- ( solve
- , losingFirstMoves
- , losingSecondMoves
+ ( solveWithPV
+ , solveAB
+ , losingFirstMovesNaive
+ , losingFirstMovesAB
+ , losingFirstMovesNS
+ , losingFirstMovesPVs
  , SolvingResult(..)
  ) where
 
+import Control.Arrow
 import Game
 import Types
+import GameTreeSolver
 
 type Depth = Int
-type Solution = ()
 
 data SolvingResult =
-    Solved Player Solution
-  | Unknown Depth -- analyzed up to that depth
+    Solved Player
+  | Unknown
   deriving (Eq, Show)
 
-solve :: Int -> Round -> SolvingResult
-solve _ r | Winner p <- roundResult r = Solved p ()
-solve 0 _ = Unknown 0
-solve depth r =
+solveAlphaBeta :: Depth -> Round -> SolvingResult
+solveAlphaBeta d r = toSolvingResult $ snd $ solveAB r d
+
+solveNegascout :: Depth -> Round -> SolvingResult
+solveNegascout d r = toSolvingResult $ snd $ solveNS r d
+
+solveWithPV :: Depth -> Round -> ([Round], SolvingResult)
+solveWithPV d r = second toSolvingResult $ solveAB r d
+
+toSolvingResult :: Int -> SolvingResult
+toSolvingResult x = case x of
+  1  -> Solved Black
+  -1 -> Solved White
+  0  -> Unknown
+  _  -> error $ "Unexpected solveAB output: " ++ show x
+
+naiveSolve :: Depth -> Round -> SolvingResult
+naiveSolve _ r | Winner p <- roundResult r = Solved p
+naiveSolve 0 _ = Unknown
+naiveSolve depth r =
   let i = rPlayer r
       he = alternate i
       iWon  = (i  `hasWon`)
       heWon = (he `hasWon`)
-      solutions = map (solve (depth - 1)) $ next r
+      solutions = map (naiveSolve (depth - 1)) $ next r
 
   in if any iWon solutions
-     then Solved i ()
+     then Solved i
      else if all heWon solutions
-          then Solved he ()
-          else Unknown depth
+          then Solved he
+          else Unknown
 
 hasWon :: Player -> SolvingResult -> Bool
-hasWon _   Unknown{}    = False
-hasWon p1 (Solved p2 _) = p1 == p2
+hasWon _   Unknown    = False
+hasWon p1 (Solved p2) = p1 == p2
 
-losingFirstMoves :: Int -> [Move]
-losingFirstMoves depth =
+
+losingFirstMovesNaive :: Int -> [Move]
+losingFirstMovesNaive depth =
   let variations = next start
-      solutions = map (solve depth) variations
+      solutions = map (naiveSolve depth) variations
       varsols = variations `zip` solutions
   in [ head $ rMoves v | (v,s) <- varsols, Solved {} <- [s]]
 
-
-losingSecondMoves :: [[Move]]
-losingSecondMoves =
-  let depth = 3
-      variations = forward 2 start
-      solutions = map (solve depth) variations
+losingFirstMovesAB :: Int -> [Move]
+losingFirstMovesAB depth =
+  let variations = next start
+      solutions = map (solveAlphaBeta depth) variations
       varsols = variations `zip` solutions
-  in [ rMoves v | (v,s) <- varsols, Solved {} <- [s]]
+  in [ head $ rMoves v | (v,s) <- varsols, Solved {} <- [s]]
 
-{-
+losingFirstMovesNS :: Int -> [Move]
+losingFirstMovesNS depth =
+  let variations = next start
+      solutions = map (solveNegascout depth) variations
+      varsols = variations `zip` solutions
+  in [ head $ rMoves v | (v,s) <- varsols, Solved {} <- [s]]
 
-r1
-
-to move: white
-solved: white wins
-solution:
-  w g8-b3      -- only move (or many, but one is enough)
-  b pass       -- any move
-  w b3-d1 #
-
--}
+losingFirstMovesPVs :: Int -> [[Move]]
+losingFirstMovesPVs depth =
+     [ reverse $ rMoves (last pv)
+     | r <- next start
+     , let (pv, s) = solveWithPV depth r
+     , Solved {} <- [s]
+     ]

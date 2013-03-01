@@ -8,6 +8,7 @@ module Game
   , next        -- generate list of moves applied to positions (1 ply or more)
   , forward
   , roundResult -- is terminal?
+  , isTerminal  -- is terminal?
   ) where
 
 import Data.Array
@@ -68,6 +69,12 @@ roundResult Round{..}
     isDeadlock = case rMoves of
       m:pm:_ -> isPass m && isPass pm
       _      -> False
+
+isTerminal :: Round -> Bool
+isTerminal r =
+  case roundResult r of
+    Winner _ -> True
+    _ -> False
 
 updateBoard :: Move -> Round -> Board
 updateBoard m r | isPass m   = rBoard r
@@ -130,9 +137,6 @@ possiblePieceMoves from Round{..} =
   , isNothing $ fPiece $ rBoard ! to
   ]
 
--- hasAnyMoves :: Coord -> Round -> Bool
--- hasAnyMoves from = not . null . possiblePieceMoves from
-
 initialFroms :: Player -> [Coord]
 initialFroms Black = [(x,1) | x <- [1..8]]
 initialFroms White = [(x,8) | x <- [1..8]]
@@ -177,8 +181,8 @@ isPass :: Move -> Bool
 isPass (Move from to) = from == to
 
 homeRow :: Player -> Int
-homeRow White = 8
 homeRow Black = 1
+homeRow White = 8
 
 forward :: Int -> Round -> [Round]
 forward 0 r = [r]
