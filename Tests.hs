@@ -11,8 +11,9 @@ import TestData
 import Game
 import Analysis
 
-import Data.Array
-import Data.Maybe
+import Data.Array.Unboxed
+import Data.Bits
+--import Data.Maybe
 import Data.List
 
 main :: IO ()
@@ -91,6 +92,7 @@ test_losemoves_ns_d9 = sort (losingFirstMovesNS 9) @?= sort losingMoves5
 
 
 piecesCount :: Round -> Int
-piecesCount = length . catMaybes . map fPiece . elems . rBoard
+--piecesCount = length . catMaybes . map fPiece . elems . unNormalBoard . rBoard
+piecesCount = sum . map fromIntegral . map ((.&.) 1) . elems . unBinaryBoard . rBoard
 
 

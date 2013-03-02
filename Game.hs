@@ -11,28 +11,8 @@ module Game
   , isTerminal  -- is terminal?
   ) where
 
-import Data.Array
 import Data.List
-import Data.Maybe
-
 import Types
-
-board0 :: Board
-board0 = listArray ((1,1), (8,8)) $ concat $ transpose $
-  [ [ filled minBound c | c <- colors ]
-  , [ empty c | c <- [Purple, Brown, Yellow, Blue, Green, Pink, Orange, Red]]
-  , [ empty c | c <- [Blue, Yellow, Brown, Purple, Red, Orange, Pink, Green]]
-  , [ empty c | c <- [Yellow, Red, Green, Brown, Orange, Blue, Purple, Pink]]
-  , [ empty c | c <- [Pink, Purple, Blue, Orange, Brown, Green, Red, Yellow]]
-  , [ empty c | c <- [Green, Pink, Orange, Red, Purple, Brown, Yellow, Blue]]
-  , [ empty c | c <- [Red, Orange, Pink, Green, Blue, Yellow, Brown, Purple]]
-  , [ filled maxBound c | c <- reverse colors ]
-  ] where
-    empty :: Color -> Field
-    empty = flip Field Nothing
-
-    filled :: Player -> Color -> Field
-    filled p c = Field c (Just $ Piece p c None)
 
 start :: Round
 start = Round
@@ -50,8 +30,8 @@ doMoves (m:ms) r =
 doMoves [] r = r
 
 doMove :: Move -> Round -> Round
-doMove m r@Round {..} = Round
-  { rBoard  = updateBoard m r
+doMove m Round {..} = Round
+  { rBoard  = updateBoard m rBoard
   , rMoves  = m : rMoves
   , rPlayer = alternate rPlayer
   }
@@ -76,16 +56,6 @@ isTerminal r =
     Winner _ -> True
     _ -> False
 
-updateBoard :: Move -> Round -> Board
-updateBoard m r | isPass m   = rBoard r
-updateBoard (Move from to) r =
-  let b = rBoard r
-      Field fromColor fromPiece = b ! from
-      Field toColor   _         = b ! to
-  in b // [ (to,   Field toColor   fromPiece)
-          , (from, Field fromColor Nothing)
-          ]
-
 genForwardMoves :: Coord -> Player -> [Coord]
 genForwardMoves (x,y) p = case p of
   Black ->
@@ -97,9 +67,9 @@ genForwardMoves (x,y) p = case p of
     ++ [ (x-i,y-i) | i <- [1 .. min (x-1) (y-1)] ]  -- left down
     ++ [ (x+i,y-i) | i <- [1 .. min (8-x) (y-1)] ]  -- right down
 
-noPiecesInBetween :: Coord -> Coord -> Board -> Bool
+noPiecesInBetween :: Board a => Coord -> Coord -> a -> Bool
 noPiecesInBetween from to b =
-  all isNothing [fPiece $ b!c | c <- between from to]
+  all (flip fieldIsEmpty b) $ between from to
 
 between :: Coord -> Coord -> [Coord]
 between (x1,y1) (x2,y2)
@@ -134,7 +104,7 @@ possiblePieceMoves from Round{..} =
   [ Move from to
   | to <- genForwardMoves from rPlayer
   , noPiecesInBetween from to rBoard
-  , isNothing $ fPiece $ rBoard ! to
+  , fieldIsEmpty to rBoard
   ]
 
 initialFroms :: Player -> [Coord]
@@ -143,7 +113,7 @@ initialFroms White = [(x,8) | x <- [1..8]]
 
 requiredFrom :: Move -> Round -> Coord
 requiredFrom lastMove Round{..} =
-  coordByColor (colorOfToField rBoard lastMove) rPlayer rBoard
+  playerPieceCoord rPlayer (colorOfToField rBoard lastMove) rBoard
 
 requiredFroms :: Round -> [Coord]
 requiredFroms r = case rMoves r of
@@ -165,17 +135,8 @@ genMoves r  = result where
   result | null moves = passMove r
          | otherwise  = moves
 
-coordByColor :: Color -> Player -> Board -> Coord
-coordByColor color p b = head
-  [ coord
-  | coord <- indices b
-  , Just piece <- [fPiece $ b ! coord]
-  , pPlayer piece == p
-  , pColor piece == color
-  ]
-
-colorOfToField :: Board -> Move -> Color
-colorOfToField b (Move _ to) = fColor $ b ! to
+colorOfToField :: Board a => a -> Move -> Color
+colorOfToField b (Move _ to) = fieldColor to b
 
 isPass :: Move -> Bool
 isPass (Move from to) = from == to
