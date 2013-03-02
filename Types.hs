@@ -74,3 +74,5 @@ instance Show Move where
     printf "%s%d-%s%d" (showFile fx) fy (showFile tx) ty
 
 data Direction = LTR | RTL deriving (Eq, Show)
+
+type Depth = Int

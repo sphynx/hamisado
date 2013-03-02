@@ -15,8 +15,6 @@ import Game
 import Types
 import GameTreeSolver
 
-type Depth = Int
-
 data SolvingResult =
     Solved Player
   | Unknown
