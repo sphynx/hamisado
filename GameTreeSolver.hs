@@ -1,6 +1,9 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
-module GameTreeSolver where
+module GameTreeSolver
+  ( solveAB
+  , solveNS
+  ) where
 
 import Data.Tree.Game_tree.Game_tree
 import Data.Tree.Game_tree.Negascout
@@ -9,16 +12,30 @@ import Game
 
 instance Game_tree Round where
   is_terminal = isTerminal
-  node_value r = gameValue (rPlayer r) r
-  children = next
+  node_value  = nodeValue
+  children    = next
 
-gameValue :: Player -> Round -> Int
-gameValue Black r =
+nodeValue :: Round -> Int
+nodeValue r = playerCoeff (rPlayer r) *
   case roundResult r of
-    Winner Black -> 1
-    Winner White -> -1
-    InProgress   -> 0
-gameValue White r = -gameValue Black r
+    Winner Black ->  100
+    Winner White -> -100
+    InProgress   ->
+      let b = rBoard r
+          ba = attackersNumber Black b
+          wa = attackersNumber White b
+        in ba - wa
+
+attackersNumber :: Board b => Player -> b -> Int
+attackersNumber p b = length
+   [ from
+   | from <- piecesCoords p b
+   , not $ null $ threats p from b
+   ]
+
+playerCoeff :: Player -> Int
+playerCoeff Black =  1
+playerCoeff White = -1
 
 solveAB :: Round -> Int -> ([Round], Int)
 solveAB = alpha_beta_search

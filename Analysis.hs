@@ -31,10 +31,9 @@ solveWithPV d r = second toSolvingResult $ solveAB r d
 
 toSolvingResult :: Int -> SolvingResult
 toSolvingResult x = case x of
-  1  -> Solved Black
-  -1 -> Solved White
-  0  -> Unknown
-  _  -> error $ "Unexpected solveAB output: " ++ show x
+  100  -> Solved Black
+  -100 -> Solved White
+  _    -> Unknown
 
 naiveSolve :: Depth -> Round -> SolvingResult
 naiveSolve _ r | Winner p <- roundResult r = Solved p

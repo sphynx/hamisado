@@ -9,6 +9,7 @@ module Game
   , forward
   , roundResult -- is terminal?
   , isTerminal  -- is terminal?
+  , threats
   ) where
 
 import Data.List
@@ -71,6 +72,9 @@ noPiecesInBetween :: Board a => Coord -> Coord -> a -> Bool
 noPiecesInBetween from to b =
   all (flip fieldIsEmpty b) $ between from to
 
+{-# INLINE noPiecesInBetween #-}
+
+
 between :: Coord -> Coord -> [Coord]
 between (x1,y1) (x2,y2)
   -- equal?
@@ -99,6 +103,8 @@ between (x1,y1) (x2,y2)
 
   where symmetric = between (x2,y2) (x1,y1)
 
+{-# INLINE between #-}
+
 possiblePieceMoves :: Coord -> Round -> [Move]
 possiblePieceMoves from Round{..} =
   [ Move from to
@@ -111,9 +117,29 @@ initialFroms :: Player -> [Coord]
 initialFroms Black = [(x,1) | x <- [1..8]]
 initialFroms White = [(x,8) | x <- [1..8]]
 
+threats :: Board b => Player -> Coord -> b -> [Coord]
+threats player from board =
+  [ target
+  | target <- targets player from
+  , noPiecesInBetween from target board
+  ]
+
+targets :: Player -> Coord -> [Coord]
+targets White (x,8) = [(x,8)]
+targets White (x,y) =
+      (if y >= 9 - x then [(x-(8-y), 8)] else [])
+   ++ [(x,8)]
+   ++ (if y >= x     then [(x+(8-y), 8)] else [])
+targets Black (x,1) = [(x,1)]
+targets Black (x,y) =
+      (if y <= 9 - x then [(x+(y-1), 1)] else [])
+   ++ [(x,1)]
+   ++ (if y <= x     then [(x-(y-1), 1)] else [])
+
+
 requiredFrom :: Move -> Round -> Coord
 requiredFrom lastMove Round{..} =
-  playerPieceCoord rPlayer (colorOfToField rBoard lastMove) rBoard
+  pieceCoord rPlayer (colorOfToField rBoard lastMove) rBoard
 
 requiredFroms :: Round -> [Coord]
 requiredFroms r = case rMoves r of
@@ -156,3 +182,4 @@ forward d r =
 
 next :: Round -> [Round]
 next = forward 1
+

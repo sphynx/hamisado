@@ -73,13 +73,15 @@ class Board a where
   updateBoard :: Move -> a -> a
   fieldIsEmpty :: Coord -> a -> Bool
   fieldColor :: Coord -> a -> Color
-  playerPieceCoord :: Player -> Color -> a -> Coord
+  pieceCoord :: Player -> Color -> a -> Coord
+  piecesCoords :: Player -> a -> [Coord]
 
 {-# SPECIALIZE board0 :: BinaryBoard #-}
 {-# SPECIALIZE updateBoard :: Move -> BinaryBoard -> BinaryBoard #-}
 {-# SPECIALIZE fieldIsEmpty :: Coord -> BinaryBoard -> Bool #-}
 {-# SPECIALIZE fieldColor :: Coord -> BinaryBoard -> Color #-}
-{-# SPECIALIZE playerPieceCoord :: Player -> Color -> BinaryBoard -> Coord #-}
+{-# SPECIALIZE pieceCoord :: Player -> Color -> BinaryBoard -> Coord #-}
+{-# SPECIALIZE piecesCoords :: Player -> Color -> BinaryBoard -> Coord #-}
 
 --- Normal board
 
@@ -114,13 +116,21 @@ instance Board NormalBoard where
 
   fieldColor c (NormalBoard b) = fColor $ b ! c
 
-  playerPieceCoord p color (NormalBoard b) = head
+  pieceCoord p color (NormalBoard b) = head
     [ coord
     | coord <- indices b
     , Just piece <- [fPiece $ b ! coord]
     , pPlayer piece == p
     , pColor piece == color
     ]
+
+  piecesCoords p (NormalBoard b) =
+    [ coord
+    | coord <- indices b
+    , Just piece <- [fPiece $ b ! coord]
+    , pPlayer piece == p
+    ]
+
 
 initialPosition :: [Field]
 initialPosition = concat $ transpose $
@@ -197,7 +207,7 @@ instance Board BinaryBoard where
 
   fieldColor c (BinaryBoard b) = bin2color $ bfcolor $ b U.! c
 
-  playerPieceCoord p color (BinaryBoard b) = head
+  pieceCoord p color (BinaryBoard b) = head
     [ coord
     | coord <- U.indices b
     , let val = b U.! coord
@@ -207,6 +217,16 @@ instance Board BinaryBoard where
     , bplayer == bpplayer val
     , bcolor == bpcolor val
     ]
+
+  piecesCoords p (BinaryBoard b) =
+    [ coord
+    | coord <- U.indices b
+    , let val = b U.! coord
+    , let bplayer = player2bin p
+    , not $ bfempty val
+    , bplayer == bpplayer val
+    ]
+
 
 bfcolor :: Word8 -> Word8
 bfcolor w = w `shiftR` 1 .&. 7 {- 0b111 -}
@@ -235,10 +255,10 @@ field2bin Field {..} = case fPiece of
 
 bin2field :: Word8 -> Field
 bin2field w =
-  let empty = w .&. 1 == 0
-      fcolor = bin2color $ w `shiftR` 1 .&. 7
+  let empty  = w .&. 1 == 0
+      fcolor = bin2color  $ w `shiftR` 1 .&. 7
       player = bin2player $ w `shiftR` 4 .&. 1
-      pcolor = bin2color $ w `shiftR` 5
+      pcolor = bin2color  $ w `shiftR` 5
   in if empty then Field fcolor Nothing
               else Field fcolor (Just $ Piece player pcolor)
 
