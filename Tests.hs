@@ -13,7 +13,6 @@ import Analysis
 
 import Data.Array.Unboxed
 import Data.Bits
---import Data.Maybe
 import Data.List
 
 main :: IO ()
@@ -36,15 +35,25 @@ moveGenTests =
   , testCase "Pass move" test_pass_move
   , testCase "Do pass move" test_do_pass_move
   , testCase "Is terminal?" is_terminal
+  , testCase "between vertical 1" between_vertical_1
+  , testCase "between vertical 2" between_vertical_2
+  , testCase "between vertical 3" between_vertical_3
+  , testCase "between vertical 4" between_vertical_4
+  , testCase "between diagonal 1" between_diagonal_1
+  , testCase "between diagonal 2" between_diagonal_2
+  , testCase "between diagonal 3" between_diagonal_3
+  , testCase "between diagonal 4" between_diagonal_4
+  , testCase "between diagonal 5" between_diagonal_5
+  , testCase "between symmetricity" between_symmetricity
   ]
 
 test_moves_length1 = length (genMoves start) @?= 13*8-2  -- 102, checked manually
 test_moves_length2 = length (genMoves r1) @?= 13
 test_moves_length3 = length (genMoves r2) @?= 1
-test_2_plies = length (forward 2 start) @?= 1188     -- not checked!
-test_3_plies = length (forward 3 start) @?= 11969    -- not checked!
-test_4_plies = length (forward 4 start) @?= 116828   -- not checked!
-test_5_plies = length (forward 5 start) @?= 1044909  -- not checked!
+test_2_plies = length (forward 2 start) @?= 1150     -- not checked!
+test_3_plies = length (forward 3 start) @?= 11182    -- not checked!
+test_4_plies = length (forward 4 start) @?= 105024   -- not checked!
+test_5_plies = length (forward 5 start) @?= 901006   -- not checked!
 
 test_pass_move = let [Move from to] = genMoves r2
                   in assertEqual "From == to in pass move" from to
@@ -58,6 +67,24 @@ test_do_pass_move =
         (piecesCount r2)
 
 is_terminal = roundResult r4d @?= Winner White
+
+between_vertical_1 = between (1,1) (1,4) @?= [(1,2), (1,3)]
+between_vertical_2 = between (2,4) (2,8) @?= [(2,5), (2,6), (2,7)]
+between_vertical_3 = between (2,4) (2,5) @?= []
+between_vertical_4 = between (2,4) (2,1) @?= [(2,2), (2,3)]
+
+between_diagonal_1 = between (1,1) (3,3) @?= [(2,2)]
+between_diagonal_2 = between (1,8) (3,6) @?= [(2,7)]
+between_diagonal_3 = between (4,6) (1,3) @?= [(2,4), (3,5)]
+between_diagonal_4 = between (2,7) (1,8) @?= []
+between_diagonal_5 = between (6,2) (4,4) @?= [(5,3)]
+
+between_symmetricity =
+  assertBool "between x y == between y x" $
+  and [ between from to == between to from
+      | from <- coords, to <- coords
+      ]
+
 
 solverTests =
   [ testCase "losing opening moves (naive, d=3)" test_losemoves_naive_d3

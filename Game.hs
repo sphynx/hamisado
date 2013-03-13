@@ -11,6 +11,7 @@ module Game
   , isTerminal  -- is terminal?
   , threats
   , targets
+  , between
   ) where
 
 import Data.List
@@ -120,8 +121,8 @@ between :: Coord -> Coord -> [Coord]
 between (x1,y1) (x2,y2)
   -- equal?
   | x1 == x2 && y1 == y2                             = []
-  -- on the same line?
-  | abs(x1-y1) /= abs(x2-y2) && x1 /= x2 && y1 /= y2 = []
+  -- not on the same line?
+  | abs(x1-x2) /= abs(y1-y2) && x1 /= x2 && y1 /= y2 = []
 
   -- vertical (2 cases)
   | x1 == x2 && y1 < y2  = [(x1, y) | y <- [y1+1 .. y2-1]]

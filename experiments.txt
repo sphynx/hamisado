@@ -72,3 +72,20 @@ Time:   20.92s
 
 Params: negascout, d=13
 Time:   61.11s
+
+
+# With improved move generation (stop on first invalid forward move)
+
+
+Params: negascout, d=7
+Time:   0.93s
+
+Params: negascout, d=9
+Time:   4.06s
+
+Params: negascout, d=11
+Time:   14.14s
+
+Params: negascout, d=13
+Time:   39.83s
+
