@@ -1,9 +1,6 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
-module GameTreeSolver
-  ( solveAB
-  , solveNS
-  ) where
+module GameTreeSolver where
 
 import Data.Tree.Game_tree.Game_tree
 import Data.Tree.Game_tree.Negascout

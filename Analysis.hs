@@ -7,6 +7,7 @@ module Analysis
  , losingFirstMovesAB
  , losingFirstMovesNS
  , losingFirstMovesPVs
+ , bestMovesAB
  , SolvingResult(..)
  ) where
 
@@ -84,3 +85,9 @@ losingFirstMovesPVs depth =
      , let (pv, s) = solveWithPV depth r
      , Solved {} <- [s]
      ]
+
+bestMovesAB :: Int -> ([Move], Int)
+bestMovesAB depth =
+  let (pv, score) = solveAB start depth
+      bestMoves = rMoves $ last pv
+  in (bestMoves, score)

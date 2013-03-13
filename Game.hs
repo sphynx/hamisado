@@ -10,6 +10,7 @@ module Game
   , roundResult -- is terminal?
   , isTerminal  -- is terminal?
   , threats
+  , targets
   ) where
 
 import Data.List
@@ -122,6 +123,7 @@ threats player from board =
   [ target
   | target <- targets player from
   , noPiecesInBetween from target board
+  , fieldIsEmpty target board
   ]
 
 targets :: Player -> Coord -> [Coord]
@@ -174,11 +176,15 @@ homeRow White = 8
 forward :: Int -> Round -> [Round]
 forward 0 r = [r]
 forward d r =
-  [ doMove m r | m <- sortMoves $ genMoves r ] >>= forward (d - 1)
+  [ doMove m r | m <- sortMoves (rPlayer r) $ genMoves r ] >>= forward (d - 1)
   where
-  sortMoves =
+  sortMoves p =
     -- Put longer moves first, since they are typically more forcing.
-    sortBy (\(Move _ (_,y1)) (Move _ (_,y2)) -> compare y2 y1)
+    sortBy (\(Move _ (_,y1)) (Move _ (_,y2)) ->
+               case p of
+                 Black -> compare y2 y1
+                 White -> compare y1 y2
+             )
 
 next :: Round -> [Round]
 next = forward 1
