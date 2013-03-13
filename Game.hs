@@ -60,6 +60,49 @@ isTerminal r =
     _ -> False
 
 
+forward :: Int -> Round -> [Round]
+forward 0 r = [r]
+forward d r =
+  [ doMove m r | m <- sortMoves (rPlayer r) $ genMoves r ] >>= forward (d - 1)
+  where
+  sortMoves p =
+    -- Put longer moves first, since they are typically more forcing.
+    sortBy (\(Move _ (_,y1)) (Move _ (_,y2)) ->
+               case p of
+                 Black -> compare y2 y1
+                 White -> compare y1 y2
+             )
+
+next :: Round -> [Round]
+next = forward 1
+
+
+
+--- Move generation.
+----------------------------------------
+
+genMoves :: Round -> [Move]
+genMoves r | Winner _ <- roundResult r = []
+genMoves r  = if null moves then passMove r else moves where
+  moves = [ Move from to
+          | from <- requiredFroms r
+          , to <- genForwardMoves from (rPlayer r) (rBoard r)
+          ]
+
+genForwardMoves :: Board b => Coord -> Player -> b -> [Coord]
+genForwardMoves from@(x,y) p b = case p of
+  Black ->
+       takeValid [ (x,  y+i) | i <- [1 .. 8-y] ]              -- straight up
+    ++ takeValid [ (x-i,y+i) | i <- [1 .. min (x-1) (8-y)] ]  -- left up
+    ++ takeValid [ (x+i,y+i) | i <- [1 .. min (8-x) (8-y)] ]  -- right up
+  White ->
+       takeValid [ (x,  y-i) | i <- [1 .. y-1] ]              -- straight down
+    ++ takeValid [ (x-i,y-i) | i <- [1 .. min (x-1) (y-1)] ]  -- left down
+    ++ takeValid [ (x+i,y-i) | i <- [1 .. min (8-x) (y-1)] ]  -- right down
+
+  where
+    takeValid = takeWhile (\to -> freeWay from to b)
+
 requiredFrom :: Move -> Round -> Coord
 requiredFrom lastMove Round{..} =
   pieceCoord rPlayer (colorOfToField rBoard lastMove) rBoard
@@ -75,46 +118,15 @@ passMove r = case rMoves r of
   m:_ -> let from = requiredFrom m r
           in [Move from from]
 
-genMoves :: Round -> [Move]
-genMoves r | Winner _ <- roundResult r = []
-genMoves r  = result where
-  moves = concat [ possiblePieceMoves from r
-                 | from <- requiredFroms r
-                 ]
-  result | null moves = passMove r
-         | otherwise  = moves
-
-
-possiblePieceMoves :: Coord -> Round -> [Move]
-possiblePieceMoves from Round{..} =
-  [ Move from to
-  | to <- genForwardMoves from rPlayer
-  , noPiecesInBetween from to rBoard
-  , fieldIsEmpty to rBoard
-  ]
-
-genForwardMoves :: Coord -> Player -> [Coord]
-genForwardMoves (x,y) p = case p of
-  Black ->
-       [ (x,  y+i) | i <- [1 .. 8-y]]               -- straight up
-    ++ [ (x-i,y+i) | i <- [1 .. min (x-1) (8-y)] ]  -- left up
-    ++ [ (x+i,y+i) | i <- [1 .. min (8-x) (8-y)] ]  -- right up
-  White ->
-       [ (x,  y-i) | i <- [1 .. y-1] ]              -- straight down
-    ++ [ (x-i,y-i) | i <- [1 .. min (x-1) (y-1)] ]  -- left down
-    ++ [ (x+i,y-i) | i <- [1 .. min (8-x) (y-1)] ]  -- right down
-
-
 initialFroms :: Player -> [Coord]
 initialFroms Black = [(x,1) | x <- [1..8]]
 initialFroms White = [(x,8) | x <- [1..8]]
 
+freeWay :: Board a => Coord -> Coord -> a -> Bool
+freeWay from to b =
+  all (flip fieldIsEmpty b) $ to : between from to
 
-noPiecesInBetween :: Board a => Coord -> Coord -> a -> Bool
-noPiecesInBetween from to b =
-  all (flip fieldIsEmpty b) $ between from to
-
-{-# INLINE noPiecesInBetween #-}
+{-# INLINE freeWay #-}
 
 
 between :: Coord -> Coord -> [Coord]
@@ -152,8 +164,7 @@ threats :: Board b => Player -> Coord -> b -> [Coord]
 threats player from board =
   [ target
   | target <- targets player from
-  , noPiecesInBetween from target board
-  , fieldIsEmpty target board
+  , freeWay from target board
   ]
 
 targets :: Player -> Coord -> [Coord]
@@ -179,20 +190,4 @@ isPass (Move from to) = from == to
 homeRow :: Player -> Int
 homeRow Black = 1
 homeRow White = 8
-
-forward :: Int -> Round -> [Round]
-forward 0 r = [r]
-forward d r =
-  [ doMove m r | m <- sortMoves (rPlayer r) $ genMoves r ] >>= forward (d - 1)
-  where
-  sortMoves p =
-    -- Put longer moves first, since they are typically more forcing.
-    sortBy (\(Move _ (_,y1)) (Move _ (_,y2)) ->
-               case p of
-                 Black -> compare y2 y1
-                 White -> compare y1 y2
-             )
-
-next :: Round -> [Round]
-next = forward 1
 
