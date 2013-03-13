@@ -1,40 +1,37 @@
 {-# LANGUAGE RecordWildCards #-}
 
 module Analysis
- ( solveWithPV
- , solveAB
- , losingFirstMovesNaive
+ ( losingFirstMovesNaive
  , losingFirstMovesAB
  , losingFirstMovesNS
- , losingFirstMovesPVs
  , bestMovesAB
+ , bestMovesNS
  , SolvingResult(..)
  ) where
 
-import Control.Arrow
 import Game
 import Types
-import GameTreeSolver
+import Search
 
 data SolvingResult =
     Solved Player
   | Unknown
   deriving (Eq, Show)
 
+toSolvingResult :: Int -> SolvingResult
+toSolvingResult x
+  | x == posInfinity = Solved Black
+  | x == negInfinity = Solved White
+  | otherwise        = Unknown
+
 solveAlphaBeta :: Depth -> Round -> SolvingResult
-solveAlphaBeta d r = toSolvingResult $ snd $ solveAB r d
+solveAlphaBeta d r = toSolvingResult $ snd $ alphaBeta1 r d
 
 solveNegascout :: Depth -> Round -> SolvingResult
-solveNegascout d r = toSolvingResult $ snd $ solveNS r d
+solveNegascout d r = toSolvingResult $ snd $ negaScout1 r d
 
-solveWithPV :: Depth -> Round -> ([Round], SolvingResult)
-solveWithPV d r = second toSolvingResult $ solveAB r d
-
-toSolvingResult :: Int -> SolvingResult
-toSolvingResult x = case x of
-  100  -> Solved Black
-  -100 -> Solved White
-  _    -> Unknown
+-- solveWithPV :: Depth -> Round -> ([Round], SolvingResult)
+-- solveWithPV d r = second toSolvingResult $ solveAB r d
 
 naiveSolve :: Depth -> Round -> SolvingResult
 naiveSolve _ r | Winner p <- roundResult r = Solved p
@@ -55,7 +52,6 @@ naiveSolve depth r =
 hasWon :: Player -> SolvingResult -> Bool
 hasWon _   Unknown    = False
 hasWon p1 (Solved p2) = p1 == p2
-
 
 losingFirstMovesNaive :: Int -> [Move]
 losingFirstMovesNaive depth =
@@ -78,16 +74,16 @@ losingFirstMovesNS depth =
       varsols = variations `zip` solutions
   in [ head $ rMoves v | (v,s) <- varsols, Solved {} <- [s]]
 
-losingFirstMovesPVs :: Int -> [[Move]]
-losingFirstMovesPVs depth =
-     [ reverse $ rMoves (last pv)
-     | r <- next start
-     , let (pv, s) = solveWithPV depth r
-     , Solved {} <- [s]
-     ]
+-- losingFirstMovesPVs :: Int -> [[Move]]
+-- losingFirstMovesPVs depth =
+--      [ reverse $ rMoves (last pv)
+--      | r <- next start
+--      , let (pv, s) = solveWithPV depth r
+--      , Solved {} <- [s]
+--      ]
 
 bestMovesAB :: Int -> ([Move], Int)
-bestMovesAB depth =
-  let (pv, score) = solveAB start depth
-      bestMoves = rMoves $ last pv
-  in (bestMoves, score)
+bestMovesAB = alphaBeta2 start
+
+bestMovesNS :: Int -> ([Move], Int)
+bestMovesNS = negaScout2 start

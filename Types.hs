@@ -67,6 +67,15 @@ instance Show Move where
 data Direction = LTR | RTL deriving (Eq, Show)
 
 type Depth = Int
+type Score = Int
+
+-- We don't use minBound/maxBound here because it messes with algorithms in
+-- Game_tree.
+negInfinity :: Int
+negInfinity = -1000000000
+
+posInfinity :: Int
+posInfinity = 1000000000
 
 class Board a where
   board0 :: a
@@ -276,3 +285,4 @@ bin2player :: Word8 -> Player
 bin2player 0 = White
 bin2player 1 = Black
 bin2player x = error $ "Unexpected binary for player" ++ show x
+

@@ -41,8 +41,8 @@ moveGenTests =
 test_moves_length1 = length (genMoves start) @?= 13*8-2  -- 102, checked manually
 test_moves_length2 = length (genMoves r1) @?= 13
 test_moves_length3 = length (genMoves r2) @?= 1
-test_2_plies = length (forward 2 start) @?= 1188    -- not checked!
-test_3_plies = length (forward 3 start) @?= 11969   -- not checked!
+test_2_plies = length (forward 2 start) @?= 1188     -- not checked!
+test_3_plies = length (forward 3 start) @?= 11969    -- not checked!
 test_4_plies = length (forward 4 start) @?= 116828   -- not checked!
 test_5_plies = length (forward 5 start) @?= 1044909  -- not checked!
 
@@ -73,9 +73,7 @@ longTests =
   , testCase "losing opening moves (alpha-beta, d=9)" test_losemoves_ab_d9
   , testCase "losing opening moves (negascout, d=7)" test_losemoves_ns_d7
   , testCase "losing opening moves (negascout, d=9)" test_losemoves_ns_d9
-
   ]
-
 
 test_losemoves_naive_d3 = sort (losingFirstMovesNaive 3) @?= sort losingMoves3
 test_losemoves_naive_d5 = sort (losingFirstMovesNaive 5) @?= sort losingMoves5

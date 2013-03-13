@@ -58,6 +58,40 @@ isTerminal r =
     Winner _ -> True
     _ -> False
 
+
+requiredFrom :: Move -> Round -> Coord
+requiredFrom lastMove Round{..} =
+  pieceCoord rPlayer (colorOfToField rBoard lastMove) rBoard
+
+requiredFroms :: Round -> [Coord]
+requiredFroms r = case rMoves r of
+  []  -> initialFroms (rPlayer r)
+  m:_ -> [ requiredFrom m r ]
+
+passMove :: Round -> [Move]
+passMove r = case rMoves r of
+  []  -> []
+  m:_ -> let from = requiredFrom m r
+          in [Move from from]
+
+genMoves :: Round -> [Move]
+genMoves r | Winner _ <- roundResult r = []
+genMoves r  = result where
+  moves = concat [ possiblePieceMoves from r
+                 | from <- requiredFroms r
+                 ]
+  result | null moves = passMove r
+         | otherwise  = moves
+
+
+possiblePieceMoves :: Coord -> Round -> [Move]
+possiblePieceMoves from Round{..} =
+  [ Move from to
+  | to <- genForwardMoves from rPlayer
+  , noPiecesInBetween from to rBoard
+  , fieldIsEmpty to rBoard
+  ]
+
 genForwardMoves :: Coord -> Player -> [Coord]
 genForwardMoves (x,y) p = case p of
   Black ->
@@ -68,6 +102,12 @@ genForwardMoves (x,y) p = case p of
        [ (x,  y-i) | i <- [1 .. y-1] ]              -- straight down
     ++ [ (x-i,y-i) | i <- [1 .. min (x-1) (y-1)] ]  -- left down
     ++ [ (x+i,y-i) | i <- [1 .. min (8-x) (y-1)] ]  -- right down
+
+
+initialFroms :: Player -> [Coord]
+initialFroms Black = [(x,1) | x <- [1..8]]
+initialFroms White = [(x,8) | x <- [1..8]]
+
 
 noPiecesInBetween :: Board a => Coord -> Coord -> a -> Bool
 noPiecesInBetween from to b =
@@ -106,17 +146,6 @@ between (x1,y1) (x2,y2)
 
 {-# INLINE between #-}
 
-possiblePieceMoves :: Coord -> Round -> [Move]
-possiblePieceMoves from Round{..} =
-  [ Move from to
-  | to <- genForwardMoves from rPlayer
-  , noPiecesInBetween from to rBoard
-  , fieldIsEmpty to rBoard
-  ]
-
-initialFroms :: Player -> [Coord]
-initialFroms Black = [(x,1) | x <- [1..8]]
-initialFroms White = [(x,8) | x <- [1..8]]
 
 threats :: Board b => Player -> Coord -> b -> [Coord]
 threats player from board =
@@ -139,29 +168,6 @@ targets Black (x,y) =
    ++ (if y <= x     then [(x-(y-1), 1)] else [])
 
 
-requiredFrom :: Move -> Round -> Coord
-requiredFrom lastMove Round{..} =
-  pieceCoord rPlayer (colorOfToField rBoard lastMove) rBoard
-
-requiredFroms :: Round -> [Coord]
-requiredFroms r = case rMoves r of
-  []  -> initialFroms (rPlayer r)
-  m:_ -> [ requiredFrom m r ]
-
-passMove :: Round -> [Move]
-passMove r = case rMoves r of
-  []  -> []
-  m:_ -> let from = requiredFrom m r
-          in [Move from from]
-
-genMoves :: Round -> [Move]
-genMoves r | Winner _ <- roundResult r = []
-genMoves r  = result where
-  moves = concat [ possiblePieceMoves from r
-                 | from <- requiredFroms r
-                 ]
-  result | null moves = passMove r
-         | otherwise  = moves
 
 colorOfToField :: Board a => a -> Move -> Color
 colorOfToField b (Move _ to) = fieldColor to b

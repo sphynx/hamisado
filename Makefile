@@ -1,7 +1,8 @@
 PROG=Kamisado
 PROF_PROG=Prof-Kamisado
+PROF_PROG_OPTS=-a alpha -d 9 -p losing
 
-all: build run
+all: build
 
 build:
 	ghc -O2 -Wall $(PROG).hs
@@ -25,7 +26,7 @@ test_all:
 	./Tests
 
 profile:	profile_build
-	./$(PROF_PROG) -d 9 +RTS -p
+	./$(PROF_PROG) $(PROF_PROG_OPTS) +RTS -p
 	awk '$$7 > 3' $(PROF_PROG).prof >$(PROF_PROG)-top.prof
 
 backup_profile:
@@ -33,7 +34,7 @@ backup_profile:
 
 
 heap:	profile_build
-	./$(PROF_PROG) -d 9 +RTS -h${ARGS} -i0.05
+	./$(PROF_PROG) $(PROF_PROG_OPTS) +RTS -h${ARGS} -i0.05
 	hp2pretty $(PROF_PROG).hp >$(PROF_PROG).svg
 	rsvg-view-3 $(PROF_PROG).svg
 

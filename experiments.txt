@@ -48,3 +48,27 @@ Time:   1m49s
 
 
 
+
+# With fixed move order
+
+Params: alphabeta, d=7
+Time:   1.50s
+
+Params: alphabeta, d=9
+Time:   7.30s
+
+Params: alphabeta, d=11
+Time:   27.14s
+
+
+Params: negascout, d=7
+Time:   1.22s
+
+Params: negascout, d=9
+Time:   5.61s
+
+Params: negascout, d=11
+Time:   20.92s
+
+Params: negascout, d=13
+Time:   61.11s

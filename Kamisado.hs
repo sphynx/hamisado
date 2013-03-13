@@ -39,7 +39,7 @@ losingMovesFunction a = case a of
 bestMoveFunction :: Algo -> Int -> ([Move], Int)
 bestMoveFunction a = case a of
   AlphaBeta -> bestMovesAB
-  Negascout -> error "N/A"
+  Negascout -> bestMovesNS
 
 main :: IO ()
 main = do
@@ -53,4 +53,4 @@ main = do
     BestMove -> do
       putStr "Best moves:  "
       let (moves, score) = bestMoveFunction algorithm depth
-      printf "Score = %d, PV = %s\n" score (show $ reverse moves)
+      printf "Score = %d, PV = %s\n" score (show moves)
