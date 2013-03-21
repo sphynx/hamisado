@@ -1,4 +1,5 @@
 == Experiments and losing first moves found so far. ==
+(times from an early run)
 
 Params: negascout, d=7, moves sorted
 Moves:  10: [A1-A7,B1-H7,D1-D7,E1-E7,G1-A7,H1-H7,A1-A6,H1-H6,C1-A3,F1-H3]
@@ -34,6 +35,10 @@ Time:   123m14.894s
 
 Params: negascout, d=17
 Moves:  66: [A1-A7,B1-B7,B1-H7,D1-D7,E1-E7,G1-G7,G1-A7,H1-H7,A1-A6,C1-H6,D1-D6,E1-E6,F1-A6,H1-H6,A1-A5,A1-E5,C1-G5,D1-D5,D1-H5,E1-E5,E1-A5,F1-B5,H1-H5,H1-D5,A1-D4,B1-E4,D1-A4,E1-H4,G1-D4,H1-E4,A1-A3,A1-C3,B1-B3,B1-D3,C1-A3,C1-E3,D1-B3,D1-F3,E1-C3,E1-G3,F1-D3,F1-H3,G1-G3,G1-E3,H1-H3,H1-F3,A1-B2,B1-B2,B1-A2,B1-C2,C1-C2,C1-B2,C1-D2,D1-D2,D1-C2,D1-E2,E1-E2,E1-D2,E1-F2,F1-F2,F1-E2,F1-G2,G1-G2,G1-F2,G1-H2,H1-G2]
+
+Params: negascout, d=19
+Moves:  74: [A1-A7,B1-B7,B1-H7,D1-D7,E1-E7,G1-G7,G1-A7,H1-H7,A1-A6,B1-G6,C1-H6,D1-D6,E1-E6,F1-A6,G1-B6,H1-H6,A1-A5,A1-E5,C1-G5,D1-D5,D1-H5,E1-E5,E1-A5,F1-B5,H1-H5,H1-D5,A1-D4,B1-B4,B1-E4,C1-F4,D1-A4,D1-G4,E1-B4,E1-H4,F1-C4,G1-G4,G1-D4,H1-E4,A1-A3,A1-C3,B1-B3,B1-D3,C1-A3,C1-E3,D1-B3,D1-F3,E1-C3,E1-G3,F1-D3,F1-H3,G1-G3,G1-E3,H1-H3,H1-F3,A1-B2,B1-B2,B1-A2,B1-C2,C1-C2,C1-B2,C1-D2,D1-D2,D1-C2,D1-E2,E1-E2,E1-D2,E1-F2,F1-F2,F1-E2,F1-G2,G1-G2,G1-F2,G1-H2,H1-G2]
+
 
 
 
@@ -78,7 +83,6 @@ Time:   61.11s
 
 # With improved move generation (stop on first invalid forward move)
 
-
 Params: negascout, d=7
 Time:   0.93s
 
@@ -96,4 +100,29 @@ Time:   97.29s
 
 Params: negascout, d=17
 Time:   173.59s
+
+
+
+# With even more improved move generation (do not use `between`)
+
+Params: negascout, d=7
+Time:   0.63s
+
+Params: negascout, d=9
+Time:   2.85s
+
+Params: negascout, d=11
+Time:   10.09s
+
+Params: negascout, d=13
+Time:   29.20s
+
+Params: negascout, d=15
+Time:   70.82s
+
+Params: negascout, d=17
+Time:   128.01s
+
+Params: negascout, d=19
+Time:   207.65s
 

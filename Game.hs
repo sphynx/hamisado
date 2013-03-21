@@ -90,7 +90,7 @@ genMoves r  = if null moves then passMove r else moves where
           ]
 
 genForwardMoves :: Board b => Coord -> Player -> b -> [Coord]
-genForwardMoves from@(x,y) p b = case p of
+genForwardMoves (x,y) p b = case p of
   Black ->
        takeValid [ (x,  y+i) | i <- [1 .. 8-y] ]              -- straight up
     ++ takeValid [ (x-i,y+i) | i <- [1 .. min (x-1) (8-y)] ]  -- left up
@@ -101,7 +101,7 @@ genForwardMoves from@(x,y) p b = case p of
     ++ takeValid [ (x+i,y-i) | i <- [1 .. min (8-x) (y-1)] ]  -- right down
 
   where
-    takeValid = takeWhile (\to -> freeWay from to b)
+    takeValid = takeWhile (\to -> fieldIsEmpty to b)
 
 requiredFrom :: Move -> Round -> Coord
 requiredFrom lastMove Round{..} =
@@ -125,9 +125,6 @@ initialFroms White = [(x,8) | x <- [1..8]]
 freeWay :: Board a => Coord -> Coord -> a -> Bool
 freeWay from to b =
   all (flip fieldIsEmpty b) $ to : between from to
-
-{-# INLINE freeWay #-}
-
 
 between :: Coord -> Coord -> [Coord]
 between (x1,y1) (x2,y2)
@@ -157,9 +154,6 @@ between (x1,y1) (x2,y2)
 
   where symmetric = between (x2,y2) (x1,y1)
 
-{-# INLINE between #-}
-
-
 threats :: Board b => Player -> Coord -> b -> [Coord]
 threats player from board =
   [ target
@@ -178,8 +172,6 @@ targets Black (x,y) =
       (if y <= 9 - x then [(x+(y-1), 1)] else [])
    ++ [(x,1)]
    ++ (if y <= x     then [(x-(y-1), 1)] else [])
-
-
 
 colorOfToField :: Board a => a -> Move -> Color
 colorOfToField b (Move _ to) = fieldColor to b

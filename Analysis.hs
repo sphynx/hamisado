@@ -20,9 +20,9 @@ data SolvingResult =
 
 toSolvingResult :: Int -> SolvingResult
 toSolvingResult x
-  | x == posInfinity = Solved Black
-  | x == negInfinity = Solved White
-  | otherwise        = Unknown
+  | x > 1000   = Solved Black
+  | x < -1000  = Solved White
+  | otherwise  = Unknown
 
 solveAlphaBeta :: Depth -> Round -> SolvingResult
 solveAlphaBeta d r = toSolvingResult $ alphaBeta1 r d
