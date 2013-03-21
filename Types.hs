@@ -30,6 +30,13 @@ type Coord = (Int, Int) -- 1 to 8
 showFile :: Int -> String
 showFile x = return $ chr $ 64 + x -- 1 to "A", 2 to "B" etc.
 
+readXCoord :: Char-> Int
+readXCoord c = ord (toUpper c) - 64 -- 'A' to 1, 'B' to 2 etc.
+
+readYCoord :: Char-> Int
+readYCoord c = ord c - 48 -- '1' to 1, etc.
+
+
 coords :: [Coord]
 coords = [(x, y) | x <- [1..8], y <- [1..8]]
 
@@ -58,11 +65,17 @@ data PlayMethod = SingleRound | Standard | Long | Marathon deriving (Eq, Show)
 
 data GameResult = Score Int Int deriving (Eq, Show)
 
-data Move = Move Coord Coord deriving (Eq, Ord)
+data Move = Move Coord Coord deriving (Eq, Ord, Read)
 
 instance Show Move where
   show (Move (fx,fy) (tx,ty)) =
     printf "%s%d-%s%d" (showFile fx) fy (showFile tx) ty
+
+-- Very crude parsing for the moment.
+parseMove :: String -> Move
+parseMove [x1, y1, '-', x2, y2] =
+  Move (readXCoord x1, readYCoord y1) (readXCoord x2, readYCoord y2)
+parseMove x = error $ "Cannot parse " ++ x
 
 data Direction = LTR | RTL deriving (Eq, Show)
 

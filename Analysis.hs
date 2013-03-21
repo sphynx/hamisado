@@ -25,13 +25,10 @@ toSolvingResult x
   | otherwise        = Unknown
 
 solveAlphaBeta :: Depth -> Round -> SolvingResult
-solveAlphaBeta d r = toSolvingResult $ snd $ alphaBeta1 r d
+solveAlphaBeta d r = toSolvingResult $ alphaBeta1 r d
 
 solveNegascout :: Depth -> Round -> SolvingResult
-solveNegascout d r = toSolvingResult $ snd $ negaScout1 r d
-
--- solveWithPV :: Depth -> Round -> ([Round], SolvingResult)
--- solveWithPV d r = second toSolvingResult $ solveAB r d
+solveNegascout d r = toSolvingResult $ negaScout1 r d
 
 naiveSolve :: Depth -> Round -> SolvingResult
 naiveSolve _ r | Winner p <- roundResult r = Solved p
@@ -73,14 +70,6 @@ losingFirstMovesNS depth =
       solutions = map (solveNegascout depth) variations
       varsols = variations `zip` solutions
   in [ head $ rMoves v | (v,s) <- varsols, Solved {} <- [s]]
-
--- losingFirstMovesPVs :: Int -> [[Move]]
--- losingFirstMovesPVs depth =
---      [ reverse $ rMoves (last pv)
---      | r <- next start
---      , let (pv, s) = solveWithPV depth r
---      , Solved {} <- [s]
---      ]
 
 bestMovesAB :: Int -> ([Move], Int)
 bestMovesAB = alphaBeta2 start

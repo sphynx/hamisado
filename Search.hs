@@ -11,11 +11,11 @@ import Types
 import Data.Tree.Game_tree.Game_tree
 import Data.Tree.Game_tree.Negascout
 
-alphaBeta1 :: Round -> Depth -> ([Move], Score)
-alphaBeta1 = alphaBeta GT1 unGT1
+alphaBeta1 :: Round -> Depth -> Score
+alphaBeta1 r d = snd $ alpha_beta_search (GT1 r) d
 
-negaScout1 :: Round -> Depth -> ([Move], Score)
-negaScout1 = negaScout GT1 unGT1
+negaScout1 :: Round -> Depth -> Score
+negaScout1 r d = snd $ negascout (GT1 r) d
 
 newtype GT1 = GT1 { unGT1 :: Round }
 instance Game_tree GT1 where
@@ -31,12 +31,18 @@ absoluteValue r = playerCoeff (rPlayer r) *
     InProgress   -> 0
 
 alphaBeta2 :: Round -> Depth -> ([Move], Score)
-alphaBeta2 = alphaBeta GT2 unGT2
+alphaBeta2 r d =
+  let (pv, score) = alpha_beta_search (GT2 r) d
+      realPV = tail $ map (head . rMoves . unGT2) pv
+  in (realPV, score)
 
 negaScout2 :: Round -> Depth -> ([Move], Score)
-negaScout2 = negaScout GT2 unGT2
+negaScout2 r d =
+  let (pv, score) = negascout (GT2 r) d
+      realPV = tail $ map (head . rMoves . unGT2) pv
+  in (realPV, score)
 
-newtype GT2 = GT2 { unGT2 :: Round }
+newtype GT2 = GT2 { unGT2 :: Round } deriving Show
 instance Game_tree GT2 where
   is_terminal = isTerminal . unGT2
   node_value  = attackersUtility . unGT2
@@ -45,13 +51,15 @@ instance Game_tree GT2 where
 attackersUtility :: Round -> Int
 attackersUtility r = playerCoeff (rPlayer r) *
   case roundResult r of
-    Winner Black -> posInfinity
-    Winner White -> negInfinity
+    Winner Black -> posInfinity - variationLen
+    Winner White -> negInfinity + variationLen
     InProgress   ->
       let b = rBoard r
           ba = attackersNumber Black b
           wa = attackersNumber White b
         in ba - wa
+
+  where variationLen = length $ rMoves r
 
 attackersNumber :: Board b => Player -> b -> Int
 attackersNumber p b = length
@@ -60,24 +68,6 @@ attackersNumber p b = length
    , not $ null $ threats p from b
    ]
 
--- Utils.
-
 playerCoeff :: Player -> Int
 playerCoeff Black =  1
 playerCoeff White = -1
-
-alphaBeta :: Game_tree a =>
-             (Round -> a) -> (a -> Round)
-             -> Round -> Depth -> ([Move], Score)
-alphaBeta wrap unwrap r d =
-  let (pv, score) = alpha_beta_search (wrap r) d
-      moves = reverse $ rMoves $ unwrap $ last pv
-  in (moves, score)
-
-negaScout :: Game_tree a =>
-             (Round -> a) -> (a -> Round)
-             -> Round -> Depth -> ([Move], Score)
-negaScout wrap unwrap r d =
-  let (pv, score) = negascout (wrap r) d
-      moves = reverse $ rMoves $ unwrap $ last pv
-  in (moves, score)
