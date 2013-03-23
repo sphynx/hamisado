@@ -1,10 +1,12 @@
 {-# LANGUAGE BangPatterns #-}
+{-# OPTIONS_GHC -fno-warn-unused-binds -fno-warn-name-shadowing#-}
+
 
 module AI.Algorithms.Tzaar
   ( alphabeta
   , negascout
   , negamax
-  , Gametree
+  , Gametree(..)
   , Valuation
   , Valued(..)
   , valued
@@ -101,27 +103,29 @@ negascout node_value depth p
         b = fromIntegral (maxBound :: Int)
     in negascout' node_value depth a b p
 
--- worker
-negascout' node_value d alfa beta p
-  | d==0 || is_terminal p = valued node_value p
-  | d==1  = valued (negate . node_value) p0       -- short-circuit for depth 1
-  | b >= beta = b
-  | otherwise = scout (max alfa b) b ps
-    where
-      d' = d-1
-      ps = children p
-      p0 = unvalued $ minimum $ map (valued node_value) ps
-      -- p0 = estimate_best node_value ps  -- child with best static score
-      b = negate $ negascout' node_value d' (negate beta) (negate alfa) p0 -- full search estimate
+ where
 
-      scout !alfa !b [] = b
-      scout !alfa !b (p:ps)
-        | s>=beta = s
-        | otherwise = scout alfa' b' ps
-          where s = negate $ negascout' node_value d' (negate (1$+alfa)) (negate alfa) p
-                s' | s>alfa = negate $
-                              negascout' node_value d' (negate beta) (negate alfa) p
-                   | otherwise = s
-                alfa' = max alfa s'
-                b' = max b s'
+  -- worker
+  negascout' node_value d alfa beta p
+    | d==0 || is_terminal p = valued node_value p
+    | d==1  = valued (negate . node_value) p0       -- short-circuit for depth 1
+    | b >= beta = b
+    | otherwise = scout (max alfa b) b ps
+      where
+        d' = d-1
+        ps = children p
+        p0 = unvalued $ minimum $ map (valued node_value) ps
+        -- p0 = estimate_best node_value ps  -- child with best static score
+        b = negate $ negascout' node_value d' (negate beta) (negate alfa) p0 -- full search estimate
+
+        scout _ !b [] = b
+        scout !alfa !b (p:ps)
+          | s>=beta = s
+          | otherwise = scout alfa' b' ps
+            where s = negate $ negascout' node_value d' (negate (1$+alfa)) (negate alfa) p
+                  s' | s>alfa = negate $
+                                negascout' node_value d' (negate beta) (negate alfa) p
+                     | otherwise = s
+                  alfa' = max alfa s'
+                  b' = max b s'
 

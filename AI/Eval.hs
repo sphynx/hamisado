@@ -2,20 +2,29 @@
 -- Static evaluation functions for positions.
 --
 
-module AI.Eval (absoluteVal, threatBasedVal) where
+module AI.Eval
+  ( simpleEval
+  , threatBasedEval
+  , evalFn
+  ) where
 
 import Game
 import Types
+import AI.Types
 
-absoluteVal :: Round -> Int
-absoluteVal r = playerCoeff (rPlayer r) *
+evalFn :: Evaluation -> (Round -> Int)
+evalFn ThreatBasedEval = threatBasedEval
+evalFn SimpleEval = simpleEval
+
+simpleEval :: Round -> Int
+simpleEval r = playerCoeff (rPlayer r) *
   case roundResult r of
     Winner Black -> posInfinity
     Winner White -> negInfinity
     InProgress   -> 0
 
-threatBasedVal :: Round -> Int
-threatBasedVal r = playerCoeff (rPlayer r) *
+threatBasedEval :: Round -> Int
+threatBasedEval r = playerCoeff (rPlayer r) *
   case roundResult r of
     Winner Black -> posInfinity - variationLen
     Winner White -> negInfinity + variationLen

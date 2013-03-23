@@ -1,4 +1,4 @@
-module AI.GameTreeSearchAPI
+module AI.API.GameTree
   ( alphabeta
   , negascout
   , minimax

@@ -1,17 +1,14 @@
 {-# LANGUAGE RecordWildCards #-}
 
 module Analysis
- ( losingFirstMovesNaive
- , losingFirstMovesAB
- , losingFirstMovesNS
- , bestMovesAB
- , bestMovesNS
- , SolvingResult(..)
+ ( losingFirstMoves
+ , losingFirstMovesNaive
+ , bestMove
  ) where
 
+import AI
 import Game
 import Types
-import Search
 
 data SolvingResult =
     Solved Player
@@ -23,12 +20,6 @@ toSolvingResult x
   | x > 1000   = Solved Black
   | x < -1000  = Solved White
   | otherwise  = Unknown
-
-solveAlphaBeta :: Depth -> Round -> SolvingResult
-solveAlphaBeta d r = toSolvingResult $ alphaBeta1 r d
-
-solveNegascout :: Depth -> Round -> SolvingResult
-solveNegascout d r = toSolvingResult $ negaScout1 r d
 
 naiveSolve :: Depth -> Round -> SolvingResult
 naiveSolve _ r | Winner p <- roundResult r = Solved p
@@ -46,9 +37,10 @@ naiveSolve depth r =
           then Solved he
           else Unknown
 
-hasWon :: Player -> SolvingResult -> Bool
-hasWon _   Unknown    = False
-hasWon p1 (Solved p2) = p1 == p2
+  where
+  hasWon :: Player -> SolvingResult -> Bool
+  hasWon _   Unknown    = False
+  hasWon p1 (Solved p2) = p1 == p2
 
 losingFirstMovesNaive :: Int -> [Move]
 losingFirstMovesNaive depth =
@@ -57,22 +49,12 @@ losingFirstMovesNaive depth =
       varsols = variations `zip` solutions
   in [ head $ rMoves v | (v,s) <- varsols, Solved {} <- [s]]
 
-losingFirstMovesAB :: Int -> [Move]
-losingFirstMovesAB depth =
-  let variations = next start
-      solutions = map (solveAlphaBeta depth) variations
-      varsols = variations `zip` solutions
-  in [ head $ rMoves v | (v,s) <- varsols, Solved {} <- [s]]
+losingFirstMoves :: Algorithm -> Implementation -> Depth -> [Move]
+losingFirstMoves a i depth =
+  let firstMoves = next start
+      solutions = map (\r -> toSolvingResult $ snd $ search a i SimpleEval r depth) firstMoves
+      movesSolutions = firstMoves `zip` solutions
+  in [ head $ rMoves r | (r,s) <- movesSolutions, Solved {} <- [s]]
 
-losingFirstMovesNS :: Int -> [Move]
-losingFirstMovesNS depth =
-  let variations = next start
-      solutions = map (solveNegascout depth) variations
-      varsols = variations `zip` solutions
-  in [ head $ rMoves v | (v,s) <- varsols, Solved {} <- [s]]
-
-bestMovesAB :: Int -> ([Move], Int)
-bestMovesAB = alphaBeta2 start
-
-bestMovesNS :: Int -> ([Move], Int)
-bestMovesNS = negaScout2 start
+bestMove :: Algorithm -> Implementation -> Depth -> (PV, Int)
+bestMove a i = search a i ThreatBasedEval start

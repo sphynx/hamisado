@@ -51,6 +51,7 @@ data Round = Round
   { rBoard  :: BinaryBoard
   , rPlayer :: Player
   , rMoves  :: [Move]
+  , rMoveNo :: Int
   } deriving (Eq, Show)
 
 data RoundResult = Winner Player | InProgress deriving (Eq, Show)

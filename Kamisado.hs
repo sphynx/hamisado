@@ -4,17 +4,15 @@
 
 module Main where
 
+import AI
 import Analysis
-import Types
 import Game
-import Search
+import Types
+
+import Control.Applicative
+import System.Console.CmdArgs
 import System.IO
 import Text.Printf
-
-import System.Console.CmdArgs
-
-data Algo = AlphaBeta | Negascout
-  deriving (Show, Data, Typeable)
 
 data PlayMode = LosingMoves | BestMove | Play
   deriving (Show, Data, Typeable)
@@ -23,55 +21,35 @@ data AIPlayer = First | Second
   deriving (Show, Data, Typeable)
 
 data Conf = Conf
-  { depth     :: Int
-  , algorithm :: Algo
-  , playMode  :: PlayMode
-  , turn      :: AIPlayer
+  { algorithm      :: Algorithm
+  , implementation :: Implementation
+  , depth          :: Int
+  , playMode       :: PlayMode
+  , turn           :: AIPlayer
   } deriving (Show, Data, Typeable)
 
 conf :: Conf
 conf = Conf
-  { depth     = 5           &= help "Depth"
-  , algorithm = Negascout   &= help "alphabeta | negascout"
-  , playMode  = LosingMoves &= help "losing | best | play"
-  , turn      = First       &= help "first | second"
+  { depth = 5                    &= help "Depth"
+  , algorithm = AlphaBeta        &= help "alphabeta | negascout"
+  , implementation = GameTree    &= help "gametree | my | tzaar"
+  , playMode = LosingMoves       &= help "losing | best | play"
+  , turn = First                 &= help "first | second"
   }
-  &= summary "Kamisado analyzer"
+  &= summary "Kamisado AI system"
   &= program "Kamisado"
 
-losingMovesFunction :: Algo -> Int -> [Move]
-losingMovesFunction a = case a of
-  AlphaBeta -> losingFirstMovesAB
-  Negascout -> losingFirstMovesNS
+losingMovesFunction :: Conf -> [Move]
+losingMovesFunction  =
+  losingFirstMoves <$> algorithm <*> implementation <*> depth
 
-bestMoveFunction :: Algo -> Int -> ([Move], Int)
-bestMoveFunction a = case a of
-  AlphaBeta -> bestMovesAB
-  Negascout -> bestMovesNS
+bestMoveFunction :: Conf -> (PV, Int)
+bestMoveFunction =
+  bestMove <$> algorithm <*> implementation <*> depth
 
-currentMoveFunction :: Algo -> Round -> Int -> ([Move], Int)
-currentMoveFunction a = case a of
-  AlphaBeta -> alphaBeta2
-  Negascout -> negaScout2
-
-main :: IO ()
-main = do
-  c@Conf{..} <- cmdArgs conf
-  hSetBuffering stdout NoBuffering
-  putStrLn $ printf "Params: algo=%s, d=%d, playmode=%s" (show algorithm) depth (show playMode)
-  case playMode of
-    LosingMoves -> do
-      putStr "Moves:  "
-      print $ losingMovesFunction algorithm depth
-    BestMove -> do
-      putStr "Best moves:  "
-      let (pv, score) = bestMoveFunction algorithm depth
-      printf "Score: %d, PV: %s\n" score (show pv)
-    Play ->
-      case turn of
-        First  -> aiMoves c start
-        Second -> humanMoves c start
-
+currentMoveFunction :: Conf -> Round -> (PV, Int)
+currentMoveFunction c r =
+  search (algorithm c) (implementation c) ThreatBasedEval r (depth c)
 
 humanMoves :: Conf -> Round -> IO ()
 humanMoves c r0 = do
@@ -85,10 +63,9 @@ humanMoves c r0 = do
     Winner p -> printf "Game finished. Winner: %s\n" (show p)
     InProgress -> aiMoves c r1
 
-
 aiMoves :: Conf -> Round -> IO ()
 aiMoves c r0 = do
-  let (aiPV, score) = currentMoveFunction (algorithm c) r0 (depth c)
+  let (aiPV, score) = currentMoveFunction c r0
       aiMove = head aiPV
       r1 = doMove aiMove r0
 
@@ -99,3 +76,29 @@ aiMoves c r0 = do
     Winner p -> printf "Game finished. Winner: %s\n" (show p)
     InProgress -> humanMoves c r1
 
+
+dumpOptions :: Conf -> String
+dumpOptions c =
+  printf "Params: mode=%s, algo=%s, implementation=%s, depth=%d"
+    (show $ playMode c)
+    (show $ algorithm c)
+    (show $ implementation c)
+    (depth c)
+
+main :: IO ()
+main = do
+  c@Conf{..} <- cmdArgs conf
+  hSetBuffering stdout NoBuffering
+  putStrLn $ dumpOptions c
+  case playMode of
+    LosingMoves -> do
+      putStr "Moves:  "
+      print $ losingMovesFunction c
+    BestMove -> do
+      putStr "Best moves:  "
+      let (pv, score) = bestMoveFunction c
+      printf "Score: %d, PV: %s\n" score (show pv)
+    Play ->
+      case turn of
+        First  -> aiMoves c start
+        Second -> humanMoves c start

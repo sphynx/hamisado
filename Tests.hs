@@ -6,27 +6,36 @@ import Test.Framework (defaultMain, testGroup)
 import Test.Framework.Providers.HUnit
 import Test.HUnit
 
-import Types
-import TestData
-import Game
 import Analysis
-import Algorithms
-import Search
+import AI
+import Game
+import TestData
+import Types
 
 import Data.Array.Unboxed
 import Data.Bits
 import Data.List
+import Text.Printf
 
 main :: IO ()
 main = defaultMain tests
 
 tests =
   [ testGroup "Move generation tests" moveGenTests
-  , testGroup "Solver tests" solverTests
-  , testGroup "Algorithms tests" algorithmTests
+  , testGroup "Losing opening moves tests" losingMovesTests
+
+  -- algorithms
+  , testGroup "GameTree algorithms tests" gameTreeAlgorithmTests
   , testGroup "My algorithms tests" myAlgorithmTests
-  , testGroup "Long tests" longTests
+  , testGroup "Tzaar algorithms tests" tzaarAlgorithmTests
+
+  -- these take too long, so they are usually not run too often
+  , testGroup "Long running tests" longTests
   ]
+
+
+------------------------------------------------------------
+-- Move generator tests.
 
 moveGenTests =
   [ testCase "# of moves in starting position" test_moves_length1
@@ -70,6 +79,10 @@ test_do_pass_move =
         (piecesCount new)
         (piecesCount r2)
 
+piecesCount :: Round -> Int
+piecesCount = sum . map fromIntegral . map ((.&.) 1) . elems . unBinaryBoard . rBoard
+
+
 is_terminal = roundResult r4d @?= Winner White
 
 between_vertical_1 = between (1,1) (1,4) @?= [(1,2), (1,3)]
@@ -89,96 +102,133 @@ between_symmetricity =
       | from <- coords, to <- coords
       ]
 
-solverTests =
+------------------------------------------------------------
+-- "Losing moves" tests. I.e. tests which calculate which starting
+-- moves are losing and compares them with the baseline.
+
+losingMovesTests =
   [ testCase "losing opening moves (naive, d=3)" test_losemoves_naive_d3
-  , testCase "losing opening moves (alpha-beta, d=3)" test_losemoves_ab_d3
-  , testCase "losing opening moves (alpha-beta, d=5)" test_losemoves_ab_d5
-  , testCase "losing opening moves (negascout, d=3)" test_losemoves_ns_d3
-  , testCase "losing opening moves (negascout, d=5)" test_losemoves_ns_d5
+  , test_losing_moves AlphaBeta GameTree 3
+  , test_losing_moves AlphaBeta GameTree 5
+  , test_losing_moves Negascout GameTree 3
+  , test_losing_moves Negascout GameTree 5
   ]
 
-longTests =
-  [ testCase "losing opening moves (naive, d=5)" test_losemoves_naive_d5
-  , testCase "losing opening moves (alpha-beta, d=7)" test_losemoves_ab_d7
-  , testCase "losing opening moves (alpha-beta, d=9)" test_losemoves_ab_d9
-  , testCase "losing opening moves (negascout, d=7)" test_losemoves_ns_d7
-  , testCase "losing opening moves (negascout, d=9)" test_losemoves_ns_d9
-  , testCase "alphabeta verified on negamax (d=4, forward=1)" test_alpha_beta_d4_1
-  ]
+
+test_losing_moves a i d =
+  testCase description $
+  sort (losingFirstMoves a i d) @?= sort baseline
+
+  where
+    description = printf "losing opening moves (%s, %s, d=%d)"
+                  (show a) (show i) d
+
+    baseline | d < 3 = []
+             | d == 3 = losingMoves3
+             | d > 3 && d <= 9 = losingMoves5
+             | otherwise = error $ printf "No baseline losing moves for depth %d" d
 
 test_losemoves_naive_d3 = sort (losingFirstMovesNaive 3) @?= sort losingMoves3
 test_losemoves_naive_d5 = sort (losingFirstMovesNaive 5) @?= sort losingMoves5
 
-test_losemoves_ab_d3 = sort (losingFirstMovesAB 3) @?= sort losingMoves3
-test_losemoves_ab_d5 = sort (losingFirstMovesAB 5) @?= sort losingMoves5
-test_losemoves_ab_d7 = sort (losingFirstMovesAB 7) @?= sort losingMoves5
-test_losemoves_ab_d9 = sort (losingFirstMovesAB 9) @?= sort losingMoves5
 
-test_losemoves_ns_d3 = sort (losingFirstMovesNS 3) @?= sort losingMoves3
-test_losemoves_ns_d5 = sort (losingFirstMovesNS 5) @?= sort losingMoves5
-test_losemoves_ns_d7 = sort (losingFirstMovesNS 7) @?= sort losingMoves5
-test_losemoves_ns_d9 = sort (losingFirstMovesNS 9) @?= sort losingMoves5
+------------------------------------------------------------
+-- Long running tests.
 
-
-piecesCount :: Round -> Int
---piecesCount = length . catMaybes . map fPiece . elems . unNormalBoard . rBoard
-piecesCount = sum . map fromIntegral . map ((.&.) 1) . elems . unBinaryBoard . rBoard
-
-
-algorithmTests =
-  [ testCase "alphabeta verified on negamax (d=2, forward=1)" test_alpha_beta_d2_1
-  , testCase "alphabeta verified on negamax (d=3, forward=1)" test_alpha_beta_d3_1
-  , testCase "alphabeta verified on negamax (d=2, forward=2)" test_alpha_beta_d2_2
-  -- , testCase "negascout verified on alphabeta (d=2, forward=1)" test_negascout_d2_1
-  -- , testCase "negascout verified on alphabeta (d=3, forward=1)" test_negascout_d3_1
-  -- , testCase "negascout verified on alphabeta (d=4, forward=1)" test_negascout_d4_1
-  -- , testCase "negascout verified on alphabeta (d=2, forward=2)" test_negascout_d2_2
+longTests =
+  [ testCase "losing opening moves (naive, d=5)" test_losemoves_naive_d5
+  , test_losing_moves AlphaBeta GameTree 7
+  , test_losing_moves AlphaBeta GameTree 9
+  , test_losing_moves Negascout GameTree 7
+  , test_losing_moves Negascout GameTree 8
+  , test_alpha_beta GameTree 4 1
+  , test_negascout My 3 2
+  , test_negascout My 4 2
+  , test_negascout_score Tzaar 3 2
+  , test_negascout_score Tzaar 4 2
   ]
 
-test_alpha_beta_d2_1 = test_alpha_beta 2 1
-test_alpha_beta_d3_1 = test_alpha_beta 3 1
-test_alpha_beta_d4_1 = test_alpha_beta 4 1
-test_alpha_beta_d2_2 = test_alpha_beta 2 2
 
-test_negascout_d2_1 = test_negascout 2 1
-test_negascout_d3_1 = test_negascout 3 1
-test_negascout_d4_1 = test_negascout 4 1
-test_negascout_d2_2 = test_negascout 2 2
+------------------------------------------------------------
+-- Tests of AI algorithms (AlphaBeta, Negascout, Minimax) from
+-- game-tree Hackage package.
+
+gameTreeAlgorithmTests =
+  [ test_alpha_beta GameTree 2 1
+  , test_alpha_beta GameTree 3 1
+  , test_alpha_beta GameTree 2 2
+
+  , test_negascout_score GameTree 2 1
+  , test_negascout_score GameTree 3 1
+  , test_negascout_score GameTree 4 1
+  , test_negascout_score GameTree 2 2
+  ]
 
 
-test_alpha_beta d n =
-  mapM_ (\r -> assertEqual "Alpha beta result does not correspond to negamax"
-               ( negaMax2 r d) ( alphaBeta2 r d)) $
-  forward n start
-
-test_negascout d n =
-  mapM_ (\r -> assertEqual "Negascout result does not correspond to alphabeta"
-               (alphaBeta2 r d) (negaScout2 r d)) $
-  forward n start
-
+------------------------------------------------------------
+-- Tests of my implementation of AI algorithms (AlphaBeta, Negascout,
+-- Minimax).
 
 myAlgorithmTests =
-  [ testCase "alphabeta verified on negamax (d=2, forward=1)" $ test_my_alpha_beta 2 1
-  , testCase "alphabeta verified on negamax (d=3, forward=1)" $ test_my_alpha_beta 3 1
---  , testCase "alphabeta verified on negamax (d=4, forward=1)" $ test_my_alpha_beta 4 1
-  , testCase "alphabeta verified on negamax (d=2, forward=2)" $ test_my_alpha_beta 2 2
---  , testCase "alphabeta verified on negamax (d=3, forward=2)" $ test_my_alpha_beta 3 2
-
-  , testCase "negascout verified on alphabeta (d=2, forward=1)" $ test_my_negascout 2 1
-  , testCase "negascout verified on alphabeta (d=3, forward=1)" $ test_my_negascout 3 1
-  , testCase "negascout verified on alphabeta (d=4, forward=1)" $ test_my_negascout 4 1
-  , testCase "negascout verified on alphabeta (d=2, forward=2)" $ test_my_negascout 2 2
-  , testCase "negascout verified on alphabeta (d=3, forward=2)" $ test_my_negascout 3 2
-  , testCase "negascout verified on alphabeta (d=4, forward=2)" $ test_my_negascout 4 2
+  [ test_alpha_beta My 2 1
+  , test_alpha_beta My 3 1
+  , test_alpha_beta My 2 2
+  , test_negascout My 2 1
+  , test_negascout My 3 1
+  , test_negascout My 4 1
+  , test_negascout My 2 2
   ]
 
-test_my_alpha_beta d n =
-  mapM_ (\r -> assertEqual "Alpha beta result does not correspond to negamax"
-               (myMinimax attackersUtility d r) (myAlphaBeta attackersUtility d r)) $
+------------------------------------------------------------
+-- Tests of AI algorithms (AlphaBeta, Negascout, Minimax) from
+-- hstzaar.
+
+tzaarAlgorithmTests =
+  [ test_negascout_score Tzaar 2 1
+  , test_negascout_score Tzaar 3 1
+  , test_negascout_score Tzaar 4 1
+  , test_negascout_score Tzaar 2 2
+  ]
+
+------------------------------------------------------------
+-- Common function for testing algorithms.
+
+test_alpha_beta i d n =
+  testCase description $
+  mapM_ (\r -> assertEqual
+               "Alpha beta result does not correspond to negamax"
+               (search Minimax i ThreatBasedEval r d)
+               (search AlphaBeta i ThreatBasedEval r d)) $
   forward n start
 
-test_my_negascout d n =
-  mapM_ (\r -> assertEqual "Negascout result does not correspond to alphabeta"
-               (myAlphaBeta attackersUtility d r)
-               (myNegascout attackersUtility d r)) $
+  where description =
+          printf "alphabeta verified on negamax (impl=%s, d=%d, forward=%d)"
+          (show i) d n
+
+test_negascout i d n =
+  testCase description $
+  mapM_ (\r -> assertEqual
+               "Negascout result does not correspond to alphabeta"
+               (search AlphaBeta i ThreatBasedEval r d)
+               (search Negascout i ThreatBasedEval r d)) $
   forward n start
+
+  where description =
+          printf "negascout verified on alphabeta (impl=%s, d=%d, forward=%d)"
+          (show i) d n
+
+-- Here we test only score, since PV may differ and it fact they do
+-- (in GameTree due to a bug - most likely, in hstzaar - due to
+-- algorithm peculiarities)
+test_negascout_score i d n =
+  testCase description $
+  mapM_ (\r -> assertEqual
+               "Negascout score does not correspond to alphabeta"
+               (snd $ search AlphaBeta i ThreatBasedEval r d)
+               (snd $ search Negascout i ThreatBasedEval r d)) $
+  forward n start
+
+  where description =
+          printf "negascout score verified on alphabeta (impl=%s, d=%d, forward=%d)"
+          (show i) d n
+

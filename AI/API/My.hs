@@ -1,18 +1,17 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
-module AI.TzaarSearchAPI
+module AI.API.My
   ( alphabeta
   , negascout
   , minimax
   ) where
 
-import AI.Types
-import AI.Eval
 import Types
 import Game
+import AI.Eval
+import AI.Types
 
-import qualified AI.Algorithms.Tzaar as Algo
-
+import qualified AI.Algorithms.My as Algo
 
 alphabeta :: Evaluation -> Round -> Depth -> (PV, Score)
 alphabeta = runAlgo Algo.alphabeta
@@ -21,16 +20,17 @@ negascout :: Evaluation -> Round -> Depth -> (PV, Score)
 negascout = runAlgo Algo.negascout
 
 minimax :: Evaluation -> Round -> Depth -> (PV, Score)
-minimax = runAlgo Algo.negamax
+minimax = runAlgo Algo.minimax
 
 
-instance Algo.Gametree Round where
+instance Algo.GameTree Round where
   is_terminal = isTerminal
   children = next
 
-runAlgo :: ((Round -> Int) -> Depth -> Round -> Algo.Valued Round)
+
+runAlgo :: ((Round -> Int) -> Depth -> Round -> (Round, Score))
            -> Evaluation -> Round -> Depth -> (PV, Score)
 runAlgo algoFn eval r d =
-   let Algo.Valued score r1 = algoFn (evalFn eval) d r
+   let (r1, score) = algoFn (evalFn eval) d r
        pv = drop (rMoveNo r) $ reverse (rMoves r1)
    in (pv, score)

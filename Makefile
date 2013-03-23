@@ -1,6 +1,6 @@
 PROG=Kamisado
 PROF_PROG=Prof-Kamisado
-PROF_PROG_OPTS=-a alpha -d 9 -p losing
+PROF_PROG_OPTS=-a alpha -i GameTree -d 9 -p losing
 
 all: build
 
@@ -39,7 +39,7 @@ heap:	profile_build
 	rsvg-view-3 $(PROF_PROG).svg
 
 clean:
-	rm -v -f *.hi *.o $(PROG) $(PROF_PROG) Tests
+	rm -v -f *.hi **/*.hi *.o **/*.o $(PROG) $(PROF_PROG) Tests
 
 clean_data:
 	rm -v -f $(PROF_PROG).hp $(PROF_PROG).prof $(PROF_PROG).png $(PROF_PROG).svg

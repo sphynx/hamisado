@@ -22,6 +22,7 @@ start = Round
   { rBoard  = board0
   , rPlayer = Black
   , rMoves  = []
+  , rMoveNo = 0
   }
 
 doMoves :: [Move] -> Round -> Round
@@ -35,8 +36,9 @@ doMoves [] r = r
 doMove :: Move -> Round -> Round
 doMove m Round {..} = Round
   { rBoard  = updateBoard m rBoard
-  , rMoves  = m : rMoves
   , rPlayer = alternate rPlayer
+  , rMoves  = m : rMoves
+  , rMoveNo = rMoveNo + 1
   }
 
 roundResult :: Round -> RoundResult

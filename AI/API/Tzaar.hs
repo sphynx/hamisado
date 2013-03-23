@@ -1,6 +1,6 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
-module AI.TzaarSearchAPI
+module AI.API.Tzaar
   ( alphabeta
   , negascout
   , minimax

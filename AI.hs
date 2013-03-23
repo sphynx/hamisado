@@ -1,21 +1,23 @@
-module AI where
+module AI
+ ( search
+ , module AI.Types
+ ) where
 
-import Game
-import AITypes
 import Types
+import AI.Types
 
-import qualified AI.MySearchAPI as My
-import qualified AI.TzaarSearchAPI as Tzaar
-import qualified AI.GameTreeSearchAPI as GameTree
+import qualified AI.API.My as My
+import qualified AI.API.Tzaar as Tzaar
+import qualified AI.API.GameTree as GameTree
 
 search :: Algorithm -> Implementation -> Evaluation -> Round -> Depth -> (PV, Score)
-search AlphaBeta My = My.alphaBeta
-search AlphaBeta GameTree = GameTree.alphaBeta
-search AlphaBeta Tzaar = Tzaar.alphaBeta
+search Minimax My = My.minimax
+search AlphaBeta My = My.alphabeta
 search Negascout My = My.negascout
+search Minimax GameTree = GameTree.minimax
+search AlphaBeta GameTree = GameTree.alphabeta
 search Negascout GameTree = GameTree.negascout
+search Minimax Tzaar = Tzaar.minimax
+search AlphaBeta Tzaar = Tzaar.alphabeta
 search Negascout Tzaar = Tzaar.negascout
-
-
-
 

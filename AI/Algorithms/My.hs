@@ -11,7 +11,6 @@ module AI.Algorithms.My
 
 import Types
 import Control.Arrow
-import Game
 import Data.List
 import Data.Ord
 
