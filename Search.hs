@@ -3,6 +3,7 @@ module Search
  , alphaBeta2
  , negaScout1
  , negaScout2
+ , negaMax2
  ) where
 
 import Game
@@ -41,6 +42,13 @@ negaScout2 r d =
   let (pv, score) = negascout (GT2 r) d
       realPV = tail $ map (head . rMoves . unGT2) pv
   in (realPV, score)
+
+negaMax2 :: Round -> Depth -> ([Move], Score)
+negaMax2 r d =
+  let (pv, score) = negamax (GT2 r) d
+      realPV = tail $ map (head . rMoves . unGT2) pv
+  in (realPV, score)
+
 
 newtype GT2 = GT2 { unGT2 :: Round } deriving Show
 instance Game_tree GT2 where

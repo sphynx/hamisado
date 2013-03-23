@@ -10,6 +10,7 @@ import Types
 import TestData
 import Game
 import Analysis
+import Search
 
 import Data.Array.Unboxed
 import Data.Bits
@@ -21,6 +22,7 @@ main = defaultMain tests
 tests =
   [ testGroup "Move generation tests" moveGenTests
   , testGroup "Solver tests" solverTests
+  , testGroup "Algorithms tests" algorithmTests
   , testGroup "Long tests" longTests
   ]
 
@@ -85,7 +87,6 @@ between_symmetricity =
       | from <- coords, to <- coords
       ]
 
-
 solverTests =
   [ testCase "losing opening moves (naive, d=3)" test_losemoves_naive_d3
   , testCase "losing opening moves (alpha-beta, d=3)" test_losemoves_ab_d3
@@ -100,6 +101,7 @@ longTests =
   , testCase "losing opening moves (alpha-beta, d=9)" test_losemoves_ab_d9
   , testCase "losing opening moves (negascout, d=7)" test_losemoves_ns_d7
   , testCase "losing opening moves (negascout, d=9)" test_losemoves_ns_d9
+  , testCase "alphabeta verified on negamax (d=4, forward=1)" test_alpha_beta_d4_1
   ]
 
 test_losemoves_naive_d3 = sort (losingFirstMovesNaive 3) @?= sort losingMoves3
@@ -120,4 +122,35 @@ piecesCount :: Round -> Int
 --piecesCount = length . catMaybes . map fPiece . elems . unNormalBoard . rBoard
 piecesCount = sum . map fromIntegral . map ((.&.) 1) . elems . unBinaryBoard . rBoard
 
+
+algorithmTests =
+  [ testCase "alphabeta verified on negamax (d=2, forward=1)" test_alpha_beta_d2_1
+  , testCase "alphabeta verified on negamax (d=3, forward=1)" test_alpha_beta_d3_1
+  , testCase "alphabeta verified on negamax (d=2, forward=2)" test_alpha_beta_d2_2
+  , testCase "negascout verified on alphabeta (d=2, forward=1)" test_negascout_d2_1
+  , testCase "negascout verified on alphabeta (d=3, forward=1)" test_negascout_d3_1
+  , testCase "negascout verified on alphabeta (d=4, forward=1)" test_negascout_d4_1
+  , testCase "negascout verified on alphabeta (d=2, forward=2)" test_negascout_d2_2
+  ]
+
+test_alpha_beta_d2_1 = test_alpha_beta 2 1
+test_alpha_beta_d3_1 = test_alpha_beta 3 1
+test_alpha_beta_d4_1 = test_alpha_beta 4 1
+test_alpha_beta_d2_2 = test_alpha_beta 2 2
+
+test_negascout_d2_1 = test_negascout 2 1
+test_negascout_d3_1 = test_negascout 3 1
+test_negascout_d4_1 = test_negascout 4 1
+test_negascout_d2_2 = test_negascout 2 2
+
+
+test_alpha_beta d n =
+  mapM_ (\r -> assertEqual "Alpha beta result does not correspond to negamax"
+               ( negaMax2 r d) ( alphaBeta2 r d)) $
+  forward n start
+
+test_negascout d n =
+  mapM_ (\r -> assertEqual "Negascout result does not correspond to alphabeta"
+               (alphaBeta2 r d) (negaScout2 r d)) $
+  forward n start
 
