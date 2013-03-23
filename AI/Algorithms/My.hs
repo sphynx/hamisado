@@ -1,7 +1,13 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# OPTIONS_GHC -fno-warn-missing-signatures -fno-warn-unused-binds #-}
 
-module Algorithms (myMinimax, myAlphaBeta, myNegascout) where
+module AI.Algorithms.My
+ ( minimax
+ , alphabeta
+ , negascout
+ , GameTree(..)
+ , Valuation
+ ) where
 
 import Types
 import Control.Arrow
@@ -9,22 +15,9 @@ import Game
 import Data.List
 import Data.Ord
 
-myMinimax :: GameTree a => Valuation a -> Depth -> a -> (a, Int)
-myMinimax = minimax
-
-myAlphaBeta :: GameTree a => Valuation a -> Depth -> a -> (a, Int)
-myAlphaBeta = alphabeta
-
-myNegascout :: GameTree a => Valuation a -> Depth -> a -> (a, Int)
-myNegascout = negascout
-
 class GameTree a where
   is_terminal :: a -> Bool
-  children   :: a -> [a]
-
-instance GameTree Round where
-  is_terminal = isTerminal
-  children = next
+  children    :: a -> [a]
 
 type Valuation a = a -> Int
 

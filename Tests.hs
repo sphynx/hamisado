@@ -10,6 +10,7 @@ import Types
 import TestData
 import Game
 import Analysis
+import Algorithms
 import Search
 
 import Data.Array.Unboxed
@@ -23,6 +24,7 @@ tests =
   [ testGroup "Move generation tests" moveGenTests
   , testGroup "Solver tests" solverTests
   , testGroup "Algorithms tests" algorithmTests
+  , testGroup "My algorithms tests" myAlgorithmTests
   , testGroup "Long tests" longTests
   ]
 
@@ -127,10 +129,10 @@ algorithmTests =
   [ testCase "alphabeta verified on negamax (d=2, forward=1)" test_alpha_beta_d2_1
   , testCase "alphabeta verified on negamax (d=3, forward=1)" test_alpha_beta_d3_1
   , testCase "alphabeta verified on negamax (d=2, forward=2)" test_alpha_beta_d2_2
-  , testCase "negascout verified on alphabeta (d=2, forward=1)" test_negascout_d2_1
-  , testCase "negascout verified on alphabeta (d=3, forward=1)" test_negascout_d3_1
-  , testCase "negascout verified on alphabeta (d=4, forward=1)" test_negascout_d4_1
-  , testCase "negascout verified on alphabeta (d=2, forward=2)" test_negascout_d2_2
+  -- , testCase "negascout verified on alphabeta (d=2, forward=1)" test_negascout_d2_1
+  -- , testCase "negascout verified on alphabeta (d=3, forward=1)" test_negascout_d3_1
+  -- , testCase "negascout verified on alphabeta (d=4, forward=1)" test_negascout_d4_1
+  -- , testCase "negascout verified on alphabeta (d=2, forward=2)" test_negascout_d2_2
   ]
 
 test_alpha_beta_d2_1 = test_alpha_beta 2 1
@@ -154,3 +156,29 @@ test_negascout d n =
                (alphaBeta2 r d) (negaScout2 r d)) $
   forward n start
 
+
+myAlgorithmTests =
+  [ testCase "alphabeta verified on negamax (d=2, forward=1)" $ test_my_alpha_beta 2 1
+  , testCase "alphabeta verified on negamax (d=3, forward=1)" $ test_my_alpha_beta 3 1
+--  , testCase "alphabeta verified on negamax (d=4, forward=1)" $ test_my_alpha_beta 4 1
+  , testCase "alphabeta verified on negamax (d=2, forward=2)" $ test_my_alpha_beta 2 2
+--  , testCase "alphabeta verified on negamax (d=3, forward=2)" $ test_my_alpha_beta 3 2
+
+  , testCase "negascout verified on alphabeta (d=2, forward=1)" $ test_my_negascout 2 1
+  , testCase "negascout verified on alphabeta (d=3, forward=1)" $ test_my_negascout 3 1
+  , testCase "negascout verified on alphabeta (d=4, forward=1)" $ test_my_negascout 4 1
+  , testCase "negascout verified on alphabeta (d=2, forward=2)" $ test_my_negascout 2 2
+  , testCase "negascout verified on alphabeta (d=3, forward=2)" $ test_my_negascout 3 2
+  , testCase "negascout verified on alphabeta (d=4, forward=2)" $ test_my_negascout 4 2
+  ]
+
+test_my_alpha_beta d n =
+  mapM_ (\r -> assertEqual "Alpha beta result does not correspond to negamax"
+               (myMinimax attackersUtility d r) (myAlphaBeta attackersUtility d r)) $
+  forward n start
+
+test_my_negascout d n =
+  mapM_ (\r -> assertEqual "Negascout result does not correspond to alphabeta"
+               (myAlphaBeta attackersUtility d r)
+               (myNegascout attackersUtility d r)) $
+  forward n start

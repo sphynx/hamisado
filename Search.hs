@@ -4,6 +4,7 @@ module Search
  , negaScout1
  , negaScout2
  , negaMax2
+ , attackersUtility
  ) where
 
 import Game

@@ -51,7 +51,7 @@ data Round = Round
   { rBoard  :: BinaryBoard
   , rPlayer :: Player
   , rMoves  :: [Move]
-  } deriving Show
+  } deriving (Eq, Show)
 
 data RoundResult = Winner Player | InProgress deriving (Eq, Show)
 
@@ -176,7 +176,7 @@ initialPosition = concat $ transpose $
 
 newtype BinaryBoard =
   BinaryBoard { unBinaryBoard :: U.UArray Coord Word8 }
-  deriving (Show)
+  deriving (Eq, Show)
 
 {-
 
