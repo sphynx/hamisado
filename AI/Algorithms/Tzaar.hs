@@ -70,7 +70,7 @@ negamax node_value depth p = negamax' depth p
     -- worker
     negamax' d p
       | d==0 || is_terminal p = valued node_value p
-      | otherwise = negate $ minimum [negamax' d  p' | p'<-children p]
+      | otherwise = negate $ minimum [negamax' d'  p' | p'<-children p]
         where d' = d-1
 
 -- | Negamax with alpha-beta prunning
