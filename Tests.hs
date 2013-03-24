@@ -156,10 +156,10 @@ longTests =
   , test_losing_moves Negascout GameTree 11
   , test_losing_moves AlphaBeta GameTree 11
   , test_losing_moves Negascout My 13
-  , test_losing_moves Negascout GameTree 13
   , test_alpha_beta GameTree 4 1
   , test_negascout My 3 2
   , test_negascout My 4 2
+  , test_alpha_beta Tzaar 4 1
   , test_negascout_score Tzaar 3 2
   , test_negascout_score Tzaar 4 2
   ]
@@ -200,7 +200,10 @@ myAlgorithmTests =
 -- hstzaar.
 
 tzaarAlgorithmTests =
-  [ test_negascout_score Tzaar 2 1
+  [ test_alpha_beta Tzaar 2 1
+  , test_alpha_beta Tzaar 3 1
+  , test_alpha_beta Tzaar 2 2
+  , test_negascout_score Tzaar 2 1
   , test_negascout_score Tzaar 3 1
   , test_negascout_score Tzaar 4 1
   , test_negascout_score Tzaar 2 2
