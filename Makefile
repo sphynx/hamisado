@@ -48,5 +48,8 @@ clean:
 	find . \( -name '*.hi' -o -name '*.o' \) -delete
 
 clean_data:	clean
-	rm -v -f $(PROF_PROG).hp $(PROF_PROG).prof $(PROF_PROG).png $(PROF_PROG).svg *.html
+	rm -v -f $(PROF_PROG).hp $(PROF_PROG).prof $(PROF_PROG).png $(PROF_PROG).svg *.html *.zip
 	rm -r hpc
+
+zip:
+	git archive -o kamisado.zip HEAD
