@@ -44,12 +44,13 @@ heap:	profile_build
 	rsvg-view-3 $(PROF_PROG).svg
 
 clean:
-	rm -v -f $(PROG) $(PROF_PROG) Tests Tests.tix
-	find . \( -name '*.hi' -o -name '*.o' \) -delete
+	rm -v -f $(PROG) $(PROF_PROG) Tests
+	find . \( -name '*.hi' -o -name '*.o' -o -name '*.tix' \) -delete
 
 clean_data:	clean
 	rm -v -f $(PROF_PROG).hp $(PROF_PROG).prof $(PROF_PROG).png $(PROF_PROG).svg *.html *.zip
-	rm -r hpc
+	rm -r -f hpc
+	rm -r -f .hpc
 
 zip:
 	git archive -o kamisado.zip HEAD

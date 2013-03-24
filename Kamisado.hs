@@ -14,7 +14,7 @@ import System.Console.CmdArgs
 import System.IO
 import Text.Printf
 
-data PlayMode = LosingMoves | BestMove | Play
+data PlayMode = LosingMoves | BestMove | Play | Perft | Solve
   deriving (Show, Data, Typeable)
 
 data AIPlayer = First | Second
@@ -31,9 +31,9 @@ data Conf = Conf
 conf :: Conf
 conf = Conf
   { depth = 5                    &= help "Depth"
-  , algorithm = AlphaBeta        &= help "alphabeta | negascout"
-  , implementation = GameTree    &= help "gametree | my | tzaar"
-  , playMode = LosingMoves       &= help "losing | best | play"
+  , algorithm = Negascout        &= help "alphabeta | negascout | minimax | idalpha"
+  , implementation = My          &= help "gametree | my | tzaar"
+  , playMode = LosingMoves       &= help "losing | best | play | perft | solve"
   , turn = First                 &= help "first | second"
   }
   &= summary "Kamisado AI system"
@@ -46,6 +46,10 @@ losingMovesFunction  =
 bestMoveFunction :: Conf -> (PV, Int)
 bestMoveFunction =
   bestMove <$> algorithm <*> implementation <*> depth
+
+solveFunction :: Conf -> SolvingResult
+solveFunction =
+  solve <$> algorithm <*> implementation <*> depth
 
 currentMoveFunction :: Conf -> Round -> (PV, Int)
 currentMoveFunction c r =
@@ -92,13 +96,20 @@ main = do
   putStrLn $ dumpOptions c
   case playMode of
     LosingMoves -> do
-      putStr "Moves:  "
+      putStr "Losing moves: "
       print $ losingMovesFunction c
     BestMove -> do
-      putStr "Best moves:  "
+      putStr "Best move: "
       let (pv, score) = bestMoveFunction c
       printf "Score: %d, PV: %s\n" score (show pv)
     Play ->
       case turn of
         First  -> aiMoves c start
         Second -> humanMoves c start
+    Perft -> do
+      let leaves = map (reverse . rMoves) $ forward depth start
+      printf "Perft for depth=%d, total number of leaves=%d\n"
+        depth (length leaves)
+      mapM_ print leaves
+    Solve ->
+      printf "Solving result: %s\n" (show $ solveFunction c)

@@ -5,7 +5,9 @@ module Game
   , doMove      -- do move{,s}
   , doMoves
   , genMoves    -- generate list of possible moves
-  , next        -- generate list of moves applied to positions (1 ply or more)
+  , next
+  , nextWithHint
+  , nextPositions -- generate list of moves applied to positions (1 ply or more)
   , forward
   , roundResult -- is terminal?
   , isTerminal  -- is terminal?
@@ -16,6 +18,9 @@ module Game
 
 import Data.List
 import Types
+
+import Debug.Trace
+import Text.Printf
 
 start :: Round
 start = Round
@@ -61,22 +66,39 @@ isTerminal r =
     Winner _ -> True
     _ -> False
 
-
 forward :: Int -> Round -> [Round]
-forward 0 r = [r]
-forward d r =
-  [ doMove m r | m <- sortMoves (rPlayer r) $ genMoves r ] >>= forward (d - 1)
+forward n r = nextPositions n Nothing r
+
+nextPositions :: Int -> Maybe Round -> Round -> [Round]
+nextPositions 0 _ r  = [r]
+nextPositions d hint r =
+  [ doMove m r | m <- sortMoves hint $ genMoves r ]
+  >>= nextPositions (d - 1) Nothing
+
   where
-  sortMoves p =
-    -- Put longer moves first, since they are typically more forcing.
-    sortBy (\(Move _ (_,y1)) (Move _ (_,y2)) ->
-               case p of
-                 Black -> compare y2 y1
-                 White -> compare y1 y2
-             )
+
+  sortMoves Nothing ms =
+    applyLongFirstSort (rPlayer r) ms
+
+  sortMoves (Just hr) moves =
+    let hintMove = reverse (rMoves hr) !! rMoveNo r
+    in trace (printf "hintmove=%s, r=%d, hr=%d" (show hintMove) (rMoveNo r) (rMoveNo hr))
+       (hintMove :
+       (applyLongFirstSort (rPlayer r) $ filter (/= hintMove) moves))
+
+-- Put longer moves first, since they are typically more forcing.
+applyLongFirstSort :: Player -> [Move] -> [Move]
+applyLongFirstSort p = sortBy f where
+  f (Move _ (_,y1)) (Move _ (_,y2)) = case p of
+    Black -> compare y2 y1
+    White -> compare y1 y2
 
 next :: Round -> [Round]
-next = forward 1
+next = nextPositions 1 Nothing
+
+nextWithHint :: Maybe Round -> Round -> [Round]
+nextWithHint = nextPositions 1
+
 
 
 
@@ -130,6 +152,7 @@ freeWay from to b =
 
 between :: Coord -> Coord -> [Coord]
 between (x1,y1) (x2,y2)
+
   -- equal?
   | x1 == x2 && y1 == y2                             = []
   -- not on the same line?
@@ -151,7 +174,6 @@ between (x1,y1) (x2,y2)
                            , let y = y1 - x + x1
                            ]
   | x1 > x2              = symmetric
-
   | otherwise = error "Should not happen"
 
   where symmetric = between (x2,y2) (x1,y1)

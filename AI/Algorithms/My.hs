@@ -1,9 +1,10 @@
-{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE FlexibleInstances, BangPatterns #-}
 {-# OPTIONS_GHC -fno-warn-missing-signatures -fno-warn-unused-binds #-}
 
 module AI.Algorithms.My
  ( minimax
  , alphabeta
+ , alphabeta2
  , negascout
  , GameTree(..)
  , Valuation
@@ -16,7 +17,7 @@ import Data.Ord
 
 class GameTree a where
   is_terminal :: a -> Bool
-  children    :: a -> [a]
+  children    :: a -> Maybe a -> [a]
 
 type Valuation a = a -> Int
 
@@ -25,18 +26,33 @@ minimax valuation d t
   | d <= 0 || is_terminal t = (t, valuation t)
   | otherwise    = id *** negate $
                    minimumBy (comparing snd) $
-                   [ minimax valuation (d-1) c | c <- children t ]
+                   [ minimax valuation (d-1) c | c <- children t Nothing ]
 
 alphabeta :: GameTree a => Valuation a -> Depth -> a -> (a, Int)
 alphabeta val d t = alphabeta' val d t negInf posInf
 
 alphabeta' :: GameTree a => Valuation a -> Depth -> a -> Int -> Int -> (a, Int)
 alphabeta' val d t _ _ | d == 0 || is_terminal t = (t, val t)
-alphabeta' val d t alpha beta = go alpha t (children t) where
+alphabeta' val d t alpha beta = go alpha t (children t Nothing) where
 
   go a pv [] = (pv, a)
   go a pv (c:cs) =
     let (cpv, score) = second negate $ alphabeta' val (d-1) c (-beta) (-a)
+        res | score >= beta = (pv, beta)       -- beta-cutoff
+            | score > a     = go score cpv cs  -- improved alpha
+            | otherwise     = go a pv cs       -- nothing happened
+    in res
+
+alphabeta2 :: GameTree a => Valuation a -> Depth -> Maybe a -> a -> (a, Int)
+alphabeta2 val d hint t = alphabeta2' val d hint t negInf posInf
+
+alphabeta2' :: GameTree a => Valuation a -> Depth -> Maybe a -> a -> Int -> Int -> (a, Int)
+alphabeta2' val d _ t _ _ | d == 0 || is_terminal t = (t, val t)
+alphabeta2' val d hint t alpha beta = go alpha t (children t hint) where
+
+  go a pv [] = (pv, a)
+  go a pv (c:cs) =
+    let (cpv, score) = second negate $ alphabeta2' val (d-1) Nothing c (-beta) (-a)
         res | score >= beta = (pv, beta)       -- beta-cutoff
             | score > a     = go score cpv cs  -- improved alpha
             | otherwise     = go a pv cs       -- nothing happened
@@ -47,11 +63,11 @@ negascout :: GameTree a => Valuation a -> Depth -> a -> (a, Int)
 negascout val d t = negascout' val d t negInf posInf
 
 negascout' :: GameTree a => Valuation a -> Depth -> a -> Int -> Int -> (a, Int)
-negascout' val d r _ _ | d == 0 || is_terminal r = (r, val r)
-negascout' val d r alpha beta = go alpha beta True r (children r) where
+negascout' val d t _ _ | d == 0 || is_terminal t = (t, val t)
+negascout' val d t alpha beta = go alpha beta True t (children t Nothing) where
 
     go a _ _ pv [] = (pv, a)
-    go a b isFirst pv (c:cs) =
+    go !a !b isFirst pv (c:cs) =
 
      let (cpv, score) = second negate $ negascout' val (d-1) c (-b) (-a)
          (cpv', score')

@@ -4,6 +4,8 @@ module Analysis
  ( losingFirstMoves
  , losingFirstMovesNaive
  , bestMove
+ , solve
+ , SolvingResult(..)
  ) where
 
 import AI
@@ -20,6 +22,9 @@ toSolvingResult x
   | x > 1000   = Solved Black
   | x < -1000  = Solved White
   | otherwise  = Unknown
+
+solve :: Algorithm -> Implementation -> Depth ->  SolvingResult
+solve a i d = toSolvingResult $ snd $ search a i SimpleEval start d
 
 naiveSolve :: Depth -> Round -> SolvingResult
 naiveSolve _ r | Winner p <- roundResult r = Solved p

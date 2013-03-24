@@ -38,13 +38,13 @@ tests =
 -- Move generator tests.
 
 moveGenTests =
-  [ testCase "# of moves in starting position" test_moves_length1
+  [ perft 1 102
+  , perft 2 1150
+  , perft 3 11182
+  , perft 4 105024
+  , perft 5 901006
   , testCase "# of moves in r1" test_moves_length2
   , testCase "# of moves in r2" test_moves_length3
-  , testCase "# of positions after 2 plies" test_2_plies
-  , testCase "# of positions after 3 plies" test_3_plies
-  , testCase "# of positions after 4 plies" test_4_plies
-  , testCase "# of positions after 5 plies" test_5_plies
   , testCase "Pass move" test_pass_move
   , testCase "Do pass move" test_do_pass_move
   , testCase "Is terminal?" is_terminal
@@ -60,13 +60,12 @@ moveGenTests =
   , testCase "between symmetricity" between_symmetricity
   ]
 
-test_moves_length1 = length (genMoves start) @?= 13*8-2  -- 102, checked manually
 test_moves_length2 = length (genMoves r1) @?= 13
 test_moves_length3 = length (genMoves r2) @?= 1
-test_2_plies = length (forward 2 start) @?= 1150     -- not checked!
-test_3_plies = length (forward 3 start) @?= 11182    -- not checked!
-test_4_plies = length (forward 4 start) @?= 105024   -- not checked!
-test_5_plies = length (forward 5 start) @?= 901006   -- not checked!
+
+perft depth leaves =
+  testCase description $ length (forward depth start) @?= leaves where
+    description = printf "perft d=%d (# of game tree leaves)" depth
 
 test_pass_move = let [Move from to] = genMoves r2
                   in assertEqual "From == to in pass move" from to
@@ -162,6 +161,9 @@ longTests =
   , test_alpha_beta Tzaar 4 1
   , test_negascout_score Tzaar 3 2
   , test_negascout_score Tzaar 4 2
+  , perft 6 7399924
+  , perft 7 56183354
+  -- , perft 8 409591124 -- too long even for long tests
   ]
 
 
