@@ -30,12 +30,15 @@ type Coord = (Int, Int) -- 1 to 8
 showFile :: Int -> String
 showFile x = return $ chr $ 64 + x -- 1 to "A", 2 to "B" etc.
 
-readXCoord :: Char-> Int
-readXCoord c = ord (toUpper c) - 64 -- 'A' to 1, 'B' to 2 etc.
+readXCoord :: Char -> Maybe Int
+readXCoord c =
+  let o = ord (toUpper c) - 64 -- 'A' to 1, 'B' to 2 etc.
+  in if 1 <= o && o <= 8 then Just o else Nothing
 
-readYCoord :: Char-> Int
-readYCoord c = ord c - 48 -- '1' to 1, etc.
-
+readYCoord :: Char -> Maybe Int
+readYCoord c =
+  let o = ord c - 48 -- '1' to 1, etc.
+  in if 1 <= o && o <= 8 then Just o else Nothing
 
 coords :: [Coord]
 coords = [(x, y) | x <- [1..8], y <- [1..8]]
@@ -73,10 +76,14 @@ instance Show Move where
     printf "%s%d-%s%d" (showFile fx) fy (showFile tx) ty
 
 -- Very crude parsing for the moment.
-parseMove :: String -> Move
-parseMove [x1, y1, '-', x2, y2] =
-  Move (readXCoord x1, readYCoord y1) (readXCoord x2, readYCoord y2)
-parseMove x = error $ "Cannot parse " ++ x
+parseMove :: String -> Maybe Move
+parseMove [x1, y1, '-', x2, y2] = do
+  x1' <- readXCoord x1
+  y1' <- readYCoord y1
+  x2' <- readXCoord x2
+  y2' <- readYCoord y2
+  return $ Move (x1', y1') (x2', y2')
+parseMove _ = Nothing
 
 data Direction = LTR | RTL deriving (Eq, Show)
 
