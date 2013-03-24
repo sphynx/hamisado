@@ -25,6 +25,12 @@ test_all:
 	ghc -O2 -Wall Tests.hs
 	./Tests
 
+hpc:	clean_data
+	ghc -O2 -Wall -fhpc Tests.hs
+	./Tests -t \!Long
+	hpc report Tests
+	hpc markup Tests --destdir=hpc
+
 profile:	profile_build
 	./$(PROF_PROG) $(PROF_PROG_OPTS) +RTS -p
 	awk '$$7 > 3' $(PROF_PROG).prof >$(PROF_PROG)-top.prof
@@ -32,14 +38,15 @@ profile:	profile_build
 backup_profile:
 	cp -v $(PROF_PROG)-top.prof previous.prof
 
-
 heap:	profile_build
 	./$(PROF_PROG) $(PROF_PROG_OPTS) +RTS -h${ARGS} -i0.05
 	hp2pretty $(PROF_PROG).hp >$(PROF_PROG).svg
 	rsvg-view-3 $(PROF_PROG).svg
 
 clean:
-	rm -v -f *.hi **/*.hi *.o **/*.o $(PROG) $(PROF_PROG) Tests
+	rm -v -f $(PROG) $(PROF_PROG) Tests Tests.tix
+	find . \( -name '*.hi' -o -name '*.o' \) -delete
 
-clean_data:
-	rm -v -f $(PROF_PROG).hp $(PROF_PROG).prof $(PROF_PROG).png $(PROF_PROG).svg
+clean_data:	clean
+	rm -v -f $(PROF_PROG).hp $(PROF_PROG).prof $(PROF_PROG).png $(PROF_PROG).svg *.html
+	rm -r hpc
