@@ -126,3 +126,45 @@ Time:   128.01s
 Params: negascout, d=19
 Time:   207.65s
 
+
+
+# With my implementation of negascout
+
+Params: negascout, d=9
+Time:   2.85s
+
+Params: negascout, d=11
+Time:   10.09s
+
+Params: negascout, d=13
+Time:   29.20s
+
+Params: negascout, d=15
+Time:   70.82s
+
+Params: negascout, d=17
+Time:   128.01s
+
+Params: negascout, d=19
+Time:   207.65s
+
+
+Params: mode=LosingMoves, algo=Negascout, implementation=My, depth=7
+Time:   0.61s
+
+Params: mode=LosingMoves, algo=Negascout, implementation=My, depth=9
+Time:   2.73s
+
+Params: mode=LosingMoves, algo=Negascout, implementation=My, depth=11
+Time:   9.64s
+
+Params: mode=LosingMoves, algo=Negascout, implementation=My, depth=13
+Time:   27.76s
+
+Params: mode=LosingMoves, algo=Negascout, implementation=My, depth=15
+Time:   67.45s
+
+Params: mode=LosingMoves, algo=Negascout, implementation=My, depth=17
+Time:   122.05s
+
+
