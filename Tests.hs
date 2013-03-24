@@ -109,9 +109,17 @@ between_symmetricity =
 losingMovesTests =
   [ testCase "losing opening moves (naive, d=3)" test_losemoves_naive_d3
   , test_losing_moves AlphaBeta GameTree 3
+  , test_losing_moves AlphaBeta My 3
+  , test_losing_moves AlphaBeta Tzaar 3
   , test_losing_moves AlphaBeta GameTree 5
+  , test_losing_moves AlphaBeta My 5
   , test_losing_moves Negascout GameTree 3
+  , test_losing_moves Negascout My 3
+  , test_losing_moves Negascout Tzaar 3
   , test_losing_moves Negascout GameTree 5
+  , test_losing_moves Negascout Tzaar 5
+  , test_losing_moves Negascout My 5
+  , test_losing_moves Negascout My 7
   ]
 
 
@@ -126,6 +134,8 @@ test_losing_moves a i d =
     baseline | d < 3 = []
              | d == 3 = losingMoves3
              | d > 3 && d <= 9 = losingMoves5
+             | d == 11 = losingMoves11
+             | d == 13 = losingMoves13
              | otherwise = error $ printf "No baseline losing moves for depth %d" d
 
 test_losemoves_naive_d3 = sort (losingFirstMovesNaive 3) @?= sort losingMoves3
@@ -141,6 +151,12 @@ longTests =
   , test_losing_moves AlphaBeta GameTree 9
   , test_losing_moves Negascout GameTree 7
   , test_losing_moves Negascout GameTree 8
+  , test_losing_moves Negascout My 11
+  , test_losing_moves AlphaBeta My 11
+  , test_losing_moves Negascout GameTree 11
+  , test_losing_moves AlphaBeta GameTree 11
+  , test_losing_moves Negascout My 13
+  , test_losing_moves Negascout GameTree 13
   , test_alpha_beta GameTree 4 1
   , test_negascout My 3 2
   , test_negascout My 4 2
