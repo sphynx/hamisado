@@ -1,6 +1,15 @@
 {-# LANGUAGE BangPatterns #-}
 {-# OPTIONS_GHC -fno-warn-unused-binds -fno-warn-name-shadowing#-}
 
+-- This code is written by Pedro Vasconcelos for his implementation of
+-- Tzaar game: HsTzaar. I'm reproducing it here just to be able to
+-- compare the performance of his implementation with my own.
+--
+-- Thanks to Pedro for providing his code, I've got some nice ideas
+-- from it.
+--
+-- HsTzaar may downloaded from Hackage:
+-- http://hackage.haskell.org/package/hstzaar
 
 module AI.Algorithms.Tzaar
   ( alphabeta
