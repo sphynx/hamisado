@@ -137,6 +137,8 @@ main = do
         Second  -> humanMoves c start
         Analyse -> analyseMoves c start
     Perft -> do
+      -- You can learn more about Perft here:
+      -- http://chessprogramming.wikispaces.com/Perft
       let leaves = map (reverse . rMoves) $ forward depth start
       printf "Perft for depth=%d, total number of leaves=%d\n"
         depth (length leaves)
