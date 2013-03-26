@@ -1,5 +1,5 @@
-PROG=Kamisado
-PROF_PROG=Prof-Kamisado
+PROG=Hamisado
+PROF_PROG=Prof-Hamisado
 PROF_PROG_OPTS=-a negascout -i my -d 10 -p losing
 
 all: build
@@ -15,7 +15,7 @@ rebuild:
 	ghc -fforce-recomp -O2 -Wall $(PROG).hs
 
 run:	build
-	sh -c "time ./Kamisado -d 7"
+	sh -c "time ./$PROG -d 7"
 
 test:
 	ghc -O2 -Wall Tests.hs
@@ -53,4 +53,4 @@ clean_data:	clean
 	rm -r -f .hpc
 
 zip:
-	git archive -o kamisado.zip HEAD
+	git archive -o hamisado.zip HEAD

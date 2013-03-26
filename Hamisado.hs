@@ -36,8 +36,8 @@ conf = Conf
   , playMode = LosingMoves       &= help "losing | best | play | perft | solve"
   , turn = First                 &= help "first | second | analyse"
   }
-  &= summary "Kamisado AI system"
-  &= program "Kamisado"
+  &= summary "Hamisado AI system"
+  &= program "Hamisado"
 
 losingMovesFunction :: Conf -> [Move]
 losingMovesFunction  =
