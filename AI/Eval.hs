@@ -1,5 +1,5 @@
 --
--- Static evaluation functions for positions.
+-- Static evaluation functions for game positions.
 --
 
 module AI.Eval
@@ -23,8 +23,18 @@ simpleEval r = playerCoeff (rPlayer r) *
     Winner White -> negInfinity
     InProgress   -> 0
 
+
+-- This is based on the difference of the number of threating pieces
+-- of each player ("threating" = can move to the last row in one
+-- move). Not a terribly clever static evaluation, but it produces
+-- sensible results and is easy enough to calculate.
+
+-- Variation length is taken into into account in solved positions to
+-- promote shortest wins and longest loses (yes, we are losing, but we
+-- should fight until the end!)
 threatBasedEval :: Round -> Int
 threatBasedEval r = playerCoeff (rPlayer r) *
+
   case roundResult r of
     Winner Black -> posInfinity - variationLen
     Winner White -> negInfinity + variationLen
@@ -38,7 +48,7 @@ threatBasedEval r = playerCoeff (rPlayer r) *
 
 attackersNumber :: Board b => Player -> b -> Int
 attackersNumber p b = length
-   [ from
+   [ ()
    | from <- piecesCoords p b
    , not $ null $ threats p from b
    ]
