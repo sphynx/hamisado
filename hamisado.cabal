@@ -1,0 +1,11 @@
+Name:                hamisado
+Version:             0.1
+Synopsis:            An AI system for playing and analysing Kamisado games
+Description:         See synopsis :)
+License:             BSD
+License-file:        LICENSE
+Author:              Ivan Veselov
+Maintainer:          Ivan Veselov <veselov@gmail.com>
+Build-Depends:       array, base, cmdargs, game-tree
+Executable:          Hamisado
+Main-is:             Hamisado.hs
