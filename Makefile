@@ -1,6 +1,6 @@
 PROG=Kamisado
 PROF_PROG=Prof-Kamisado
-PROF_PROG_OPTS=-a alpha -i GameTree -d 9 -p losing
+PROF_PROG_OPTS=-a negascout -i my -d 10 -p losing
 
 all: build
 
