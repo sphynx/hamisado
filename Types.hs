@@ -99,19 +99,12 @@ posInfinity :: Int
 posInfinity = 1000000000
 
 class Board a where
-  board0 :: a
-  updateBoard :: Move -> a -> a
+  board0       :: a
+  updateBoard  :: Move -> a -> a
   fieldIsEmpty :: Coord -> a -> Bool
-  fieldColor :: Coord -> a -> Color
-  pieceCoord :: Player -> Color -> a -> Coord
+  fieldColor   :: Coord -> a -> Color
+  pieceCoord   :: Player -> Color -> a -> Coord
   piecesCoords :: Player -> a -> [Coord]
-
-{-# SPECIALIZE board0 :: BinaryBoard #-}
-{-# SPECIALIZE updateBoard :: Move -> BinaryBoard -> BinaryBoard #-}
-{-# SPECIALIZE fieldIsEmpty :: Coord -> BinaryBoard -> Bool #-}
-{-# SPECIALIZE fieldColor :: Coord -> BinaryBoard -> Color #-}
-{-# SPECIALIZE pieceCoord :: Player -> Color -> BinaryBoard -> Coord #-}
-{-# SPECIALIZE piecesCoords :: Player -> Color -> BinaryBoard -> Coord #-}
 
 --- Normal board
 
