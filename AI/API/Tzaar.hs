@@ -25,8 +25,8 @@ minimax = runAlgo Algo.negamax
 
 
 instance Algo.Gametree Round where
-  is_terminal = isTerminal
-  children = next
+  is_terminal = isOver
+  children = nextPositions
 
 runAlgo :: ((Round -> Int) -> Depth -> Round -> Algo.Valued Round)
            -> Evaluation -> Round -> Depth -> (PV, Score)

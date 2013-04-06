@@ -14,7 +14,6 @@ import qualified AI.API.GameTree as GameTree
 search :: Algorithm -> Implementation -> Evaluation -> Round -> Depth -> (PV, Score)
 search Minimax My = My.minimax
 search AlphaBeta My = My.alphabeta
-search IDAlphaBeta My = My.idAlphabeta
 search Negascout My = My.negascout
 search Minimax GameTree = GameTree.minimax
 search AlphaBeta GameTree = GameTree.alphabeta

@@ -1,26 +1,32 @@
 {-# LANGUAGE RecordWildCards #-}
 
 module Game
-  ( start       -- starting position
-  , doMove      -- do move{,s}
+  (
+  -- Initial position.
+    start
+
+  -- Applying moves (one and many) to a position.
+  , doMove
   , doMoves
-  , genMoves    -- generate list of possible moves
-  , next
-  , nextWithHint
-  , nextPositions -- generate list of moves applied to positions (1 ply or more)
-  , forward
-  , roundResult -- is terminal?
-  , isTerminal  -- is terminal?
-  , threats
-  , targets
-  , between
+
+  -- Legal moves in this position.
+  , legalMoves
+
+  -- Checks whether round is over and gets its final value.
+  , isOver
+  , roundResult
+
+  -- Positions which may result from given position by applying
+  -- certain number of legal moves.
+  , legalPositions
+
+  -- Positions which may result from given position by applying one
+  -- move.
+  , nextPositions
   ) where
 
 import Data.List
 import Types
-
-import Debug.Trace
-import Text.Printf
 
 start :: Round
 start = Round
@@ -30,25 +36,23 @@ start = Round
   , rMoveNo = 0
   }
 
-doMoves :: [Move] -> Round -> Round
-doMoves (m:ms) r =
-  let r' = doMove m r
-  in case roundResult r' of
-       InProgress -> doMoves ms r'
-       _          -> r'
-doMoves [] r = r
-
 doMove :: Move -> Round -> Round
 doMove m Round {..} = Round
   { rBoard  = updateBoard m rBoard
-  , rPlayer = alternate rPlayer
+  , rPlayer = opponent rPlayer
   , rMoves  = m : rMoves
   , rMoveNo = rMoveNo + 1
   }
 
+doMoves :: [Move] -> Round -> Round
+doMoves [] r = r
+doMoves (m:ms) r =
+  let r' = doMove m r
+  in if isOver r then r' else doMoves ms r'
+
 roundResult :: Round -> RoundResult
 roundResult Round{..}
-  | reachedHomeRow || isDeadlock = Winner (alternate rPlayer)
+  | reachedHomeRow || isDeadlock = Winner $ opponent rPlayer
   | otherwise                    = InProgress
 
   where
@@ -60,31 +64,19 @@ roundResult Round{..}
       m:pm:_ -> isPass m && isPass pm
       _      -> False
 
-isTerminal :: Round -> Bool
-isTerminal r =
-  case roundResult r of
-    Winner _ -> True
-    _ -> False
+isOver :: Round -> Bool
+isOver r | Winner _ <- roundResult r = True
+isOver _ = False
 
-forward :: Int -> Round -> [Round]
-forward n r = nextPositions n Nothing r
-
-nextPositions :: Int -> Maybe Round -> Round -> [Round]
-nextPositions 0 _ r  = [r]
-nextPositions d hint r =
-  [ doMove m r | m <- sortMoves hint $ genMoves r ]
-  >>= nextPositions (d - 1) Nothing
-
+legalPositions :: Int -> Round -> [Round]
+legalPositions 0 r = [r]
+legalPositions d r =
+  [ doMove m r | m <- sortMoves $ legalMoves r ] >>= legalPositions (d - 1)
   where
+  sortMoves ms = applyLongFirstSort (rPlayer r) ms
 
-  sortMoves Nothing ms =
-    applyLongFirstSort (rPlayer r) ms
-
-  sortMoves (Just hr) moves =
-    let hintMove = reverse (rMoves hr) !! rMoveNo r
-    in trace (printf "hintmove=%s, r=%d, hr=%d" (show hintMove) (rMoveNo r) (rMoveNo hr))
-       (hintMove :
-       (applyLongFirstSort (rPlayer r) $ filter (/= hintMove) moves))
+nextPositions :: Round -> [Round]
+nextPositions = legalPositions 1
 
 -- Put longer moves first, since they are typically more forcing.
 applyLongFirstSort :: Player -> [Move] -> [Move]
@@ -93,28 +85,20 @@ applyLongFirstSort p = sortBy f where
     Black -> compare y2 y1
     White -> compare y1 y2
 
-next :: Round -> [Round]
-next = nextPositions 1 Nothing
-
-nextWithHint :: Maybe Round -> Round -> [Round]
-nextWithHint = nextPositions 1
-
-
-
 
 --- Move generation.
 ----------------------------------------
 
-genMoves :: Round -> [Move]
-genMoves r | Winner _ <- roundResult r = []
-genMoves r  = if null moves then passMove r else moves where
+legalMoves :: Round -> [Move]
+legalMoves r | isOver r = []
+legalMoves r  = if null moves then passMove r else moves where
   moves = [ Move from to
           | from <- requiredFroms r
-          , to <- genForwardMoves from (rPlayer r) (rBoard r)
+          , to <- possibleTos from (rPlayer r) (rBoard r)
           ]
 
-genForwardMoves :: Board b => Coord -> Player -> b -> [Coord]
-genForwardMoves (x,y) p b = case p of
+possibleTos :: Board b => Coord -> Player -> b -> [Coord]
+possibleTos (x,y) p b = case p of
   Black ->
        takeValid [ (x,  y+i) | i <- [1 .. 8-y] ]              -- straight up
     ++ takeValid [ (x-i,y+i) | i <- [1 .. min (x-1) (8-y)] ]  -- left up
@@ -128,77 +112,23 @@ genForwardMoves (x,y) p b = case p of
     takeValid = takeWhile (\to -> fieldIsEmpty to b)
 
 requiredFrom :: Move -> Round -> Coord
-requiredFrom lastMove Round{..} =
-  pieceCoord rPlayer (colorOfToField rBoard lastMove) rBoard
+requiredFrom (Move _ to) Round{..} =
+  pieceCoord rPlayer (fieldColor to rBoard) rBoard
 
 requiredFroms :: Round -> [Coord]
 requiredFroms r = case rMoves r of
-  []  -> initialFroms (rPlayer r)
-  m:_ -> [ requiredFrom m r ]
+  []    -> initialFroms (rPlayer r)
+  m : _ -> [ requiredFrom m r ]
+
+initialFroms :: Player -> [Coord]
+initialFroms Black = [(x,1) | x <- [1..8]]
+initialFroms White = [(x,8) | x <- [1..8]]
 
 passMove :: Round -> [Move]
 passMove r = case rMoves r of
   []  -> []
   m:_ -> let from = requiredFrom m r
           in [Move from from]
-
-initialFroms :: Player -> [Coord]
-initialFroms Black = [(x,1) | x <- [1..8]]
-initialFroms White = [(x,8) | x <- [1..8]]
-
-freeWay :: Board a => Coord -> Coord -> a -> Bool
-freeWay from to b =
-  all (flip fieldIsEmpty b) $ to : between from to
-
-between :: Coord -> Coord -> [Coord]
-between (x1,y1) (x2,y2)
-
-  -- equal?
-  | x1 == x2 && y1 == y2                             = []
-  -- not on the same line?
-  | abs(x1-x2) /= abs(y1-y2) && x1 /= x2 && y1 /= y2 = []
-
-  -- vertical (2 cases)
-  | x1 == x2 && y1 < y2  = [(x1, y) | y <- [y1+1 .. y2-1]]
-  | x1 == x2 && y1 > y2  = symmetric
-
-  -- horizontal (2 cases)
-  | x1 < x2 && y1 == y2  = [(x, y1) | x <- [x1+1 .. x2-1]]
-  | x1 > x2 && y1 == y2  = symmetric
-
-  -- diagonal (4 cases)
-  | x1 < x2 && y1 < y2   = [ (x,y) | x <- [x1+1 .. x2-1]
-                           , let y = y1 + x - x1
-                           ]
-  | x1 < x2 && y1 > y2   = [ (x,y) | x <- [x1+1 .. x2-1]
-                           , let y = y1 - x + x1
-                           ]
-  | x1 > x2              = symmetric
-  | otherwise = error "Should not happen"
-
-  where symmetric = between (x2,y2) (x1,y1)
-
-threats :: Board b => Player -> Coord -> b -> [Coord]
-threats player from board =
-  [ target
-  | target <- targets player from
-  , freeWay from target board
-  ]
-
-targets :: Player -> Coord -> [Coord]
-targets White (x,8) = [(x,8)]
-targets White (x,y) =
-      (if y >= 9 - x then [(x-(8-y), 8)] else [])
-   ++ [(x,8)]
-   ++ (if y >= x     then [(x+(8-y), 8)] else [])
-targets Black (x,1) = [(x,1)]
-targets Black (x,y) =
-      (if y <= 9 - x then [(x+(y-1), 1)] else [])
-   ++ [(x,1)]
-   ++ (if y <= x     then [(x-(y-1), 1)] else [])
-
-colorOfToField :: Board a => a -> Move -> Color
-colorOfToField b (Move _ to) = fieldColor to b
 
 isPass :: Move -> Bool
 isPass (Move from to) = from == to

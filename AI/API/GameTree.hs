@@ -14,15 +14,15 @@ import qualified Data.Tree.Game_tree.Negascout as Algo
 
 newtype GTSimple = GTSimple { unGTSimple :: Round }
 instance Game_tree GTSimple where
-  is_terminal = isTerminal . unGTSimple
+  is_terminal = isOver . unGTSimple
   node_value  = simpleEval . unGTSimple
-  children    = map GTSimple . next . unGTSimple
+  children    = map GTSimple . nextPositions . unGTSimple
 
 newtype GTThreatBased = GTThreatBased{ unGTThreatBased :: Round } deriving Show
 instance Game_tree GTThreatBased where
-  is_terminal = isTerminal . unGTThreatBased
+  is_terminal = isOver . unGTThreatBased
   node_value  = threatBasedEval . unGTThreatBased
-  children    = map GTThreatBased . next . unGTThreatBased
+  children    = map GTThreatBased . nextPositions . unGTThreatBased
 
 
 alphabeta :: Evaluation -> Round -> Depth -> (PV, Score)

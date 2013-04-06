@@ -139,7 +139,7 @@ main = do
     Perft -> do
       -- You can learn more about Perft here:
       -- http://chessprogramming.wikispaces.com/Perft
-      let leaves = map (reverse . rMoves) $ forward depth start
+      let leaves = map (reverse . rMoves) $ legalPositions depth start
       printf "Perft for depth=%d, total number of leaves=%d\n"
         depth (length leaves)
       mapM_ print leaves

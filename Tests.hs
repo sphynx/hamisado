@@ -8,6 +8,7 @@ import Test.HUnit
 
 import Analysis
 import AI
+import AI.Eval
 import Game
 import TestData
 import Types
@@ -60,18 +61,18 @@ moveGenTests =
   , testCase "between symmetricity" between_symmetricity
   ]
 
-test_moves_length2 = length (genMoves r1) @?= 13
-test_moves_length3 = length (genMoves r2) @?= 1
+test_moves_length2 = length (legalMoves r1) @?= 13
+test_moves_length3 = length (legalMoves r2) @?= 1
 
 perft depth leaves =
-  testCase description $ length (forward depth start) @?= leaves where
+  testCase description $ length (legalPositions depth start) @?= leaves where
     description = printf "perft d=%d (# of game tree leaves)" depth
 
-test_pass_move = let [Move from to] = genMoves r2
+test_pass_move = let [Move from to] = legalMoves r2
                   in assertEqual "From == to in pass move" from to
 
 test_do_pass_move =
-  let [pass] = genMoves r2
+  let [pass] = legalMoves r2
       new = doMove pass r2
    in assertEqual
         "Pass move should not remove pieces from board"
@@ -220,7 +221,7 @@ test_alpha_beta i d n =
                "Alpha beta result does not correspond to negamax"
                (search Minimax i ThreatBasedEval r d)
                (search AlphaBeta i ThreatBasedEval r d)) $
-  forward n start
+  legalPositions n start
 
   where description =
           printf "alphabeta verified on negamax (impl=%s, d=%d, forward=%d)"
@@ -232,7 +233,7 @@ test_negascout i d n =
                "Negascout result does not correspond to alphabeta"
                (search AlphaBeta i ThreatBasedEval r d)
                (search Negascout i ThreatBasedEval r d)) $
-  forward n start
+  legalPositions n start
 
   where description =
           printf "negascout verified on alphabeta (impl=%s, d=%d, forward=%d)"
@@ -247,7 +248,7 @@ test_negascout_score i d n =
                "Negascout score does not correspond to alphabeta"
                (snd $ search AlphaBeta i ThreatBasedEval r d)
                (snd $ search Negascout i ThreatBasedEval r d)) $
-  forward n start
+  legalPositions n start
 
   where description =
           printf "negascout score verified on alphabeta (impl=%s, d=%d, forward=%d)"

@@ -31,10 +31,10 @@ naiveSolve _ r | Winner p <- roundResult r = Solved p
 naiveSolve 0 _ = Unknown
 naiveSolve depth r =
   let i = rPlayer r
-      he = alternate i
+      he = opponent i
       iWon  = (i  `hasWon`)
       heWon = (he `hasWon`)
-      solutions = map (naiveSolve (depth - 1)) $ next r
+      solutions = map (naiveSolve (depth - 1)) $ nextPositions r
 
   in if any iWon solutions
      then Solved i
@@ -49,14 +49,14 @@ naiveSolve depth r =
 
 losingFirstMovesNaive :: Int -> [Move]
 losingFirstMovesNaive depth =
-  let variations = next start
+  let variations = nextPositions start
       solutions = map (naiveSolve depth) variations
       varsols = variations `zip` solutions
   in [ head $ rMoves v | (v,s) <- varsols, Solved {} <- [s]]
 
 losingFirstMoves :: Algorithm -> Implementation -> Depth -> [Move]
 losingFirstMoves a i depth =
-  let firstMoves = next start
+  let firstMoves = nextPositions start
       solutions = map (\r -> toSolvingResult $ snd $ search a i SimpleEval r depth) firstMoves
       movesSolutions = firstMoves `zip` solutions
   in [ head $ rMoves r | (r,s) <- movesSolutions, Solved {} <- [s]]

@@ -1,6 +1,7 @@
 PROG=Hamisado
 PROF_PROG=Prof-Hamisado
 PROF_PROG_OPTS=-a negascout -i my -d 10 -p losing
+BENCH_OPTS=-a negascout -i my -p losing
 
 all: build
 
@@ -58,3 +59,9 @@ zip:
 etags:
 	rm -f TAGS
 	fast-tags -e -v -R .
+
+benchmark:
+	sh -c "time $(PROG) $(BENCH_OPTS) -d 7"
+	echo "Baseline time: 0.61s"
+	sh -c "time $(PROG) $(BENCH_OPTS) -d 9"
+	echo "Baseline time: 2.73s"

@@ -46,9 +46,9 @@ coords = [(x, y) | x <- [1..8], y <- [1..8]]
 data Player = Black | White
   deriving (Eq, Show, Enum, Bounded)
 
-alternate :: Player -> Player
-alternate White = Black
-alternate Black = White
+opponent :: Player -> Player
+opponent White = Black
+opponent Black = White
 
 data Round = Round
   { rBoard  :: BinaryBoard
