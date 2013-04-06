@@ -54,3 +54,7 @@ clean_data:	clean
 
 zip:
 	git archive -o hamisado.zip HEAD
+
+etags:
+	rm -f TAGS
+	fast-tags -e -v -R .
