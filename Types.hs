@@ -50,24 +50,14 @@ opponent :: Player -> Player
 opponent White = Black
 opponent Black = White
 
-data Round = Round
-  { rBoard  :: BinaryBoard
-  , rPlayer :: Player
-  , rMoves  :: [Move]
-  , rMoveNo :: Int
+data Position b = Position
+  { pBoard  :: b
+  , pPlayer :: Player
+  , pMoves  :: [Move]
+  , pMoveNo :: Int
   } deriving (Eq, Show)
 
-data RoundResult = Winner Player | InProgress deriving (Eq, Show)
-
-data Game = Game
-  { gPlayMethod :: PlayMethod
-  , gRounds     :: [Round]
-  , gResult     :: GameResult
-  } deriving Show
-
-data PlayMethod = SingleRound | Standard | Long | Marathon deriving (Eq, Show)
-
-data GameResult = Score Int Int deriving (Eq, Show)
+data Result = Winner Player | InProgress deriving (Eq, Show)
 
 data Move = Move Coord Coord deriving (Eq, Ord, Read)
 
@@ -118,8 +108,8 @@ data Field = Field
   } deriving (Show)
 
 data Piece = Piece
-  { pPlayer :: Player
-  , pColor  :: Color
+  { piecePlayer :: Player
+  , pieceColor  :: Color
   } deriving (Show)
 
 instance Board NormalBoard where
@@ -143,15 +133,15 @@ instance Board NormalBoard where
     [ coord
     | coord <- indices b
     , Just piece <- [fPiece $ b ! coord]
-    , pPlayer piece == p
-    , pColor piece == color
+    , piecePlayer piece == p
+    , pieceColor piece == color
     ]
 
   piecesCoords p (NormalBoard b) =
     [ coord
     | coord <- indices b
     , Just piece <- [fPiece $ b ! coord]
-    , pPlayer piece == p
+    , piecePlayer piece == p
     ]
 
 
@@ -215,6 +205,7 @@ instance Board BinaryBoard where
            U.listArray ((1,1), (8,8)) $
            map field2bin $ initialPosition
 
+  {-# INLINE updateBoard #-}
   updateBoard (Move from to) b | from == to = b
   updateBoard (Move from to) (BinaryBoard b) =
     let fromField = b U.! from
@@ -226,10 +217,13 @@ instance Board BinaryBoard where
        , (from, fromColor `shiftL` 1)
        ]
 
+  {-# INLINE fieldIsEmpty #-}
   fieldIsEmpty c (BinaryBoard b) = bfempty $ b U.! c
 
+  {-# INLINE fieldColor #-}
   fieldColor c (BinaryBoard b) = bin2color $ bfcolor $ b U.! c
 
+  {-# INLINE pieceCoord #-}
   pieceCoord p color (BinaryBoard b) = head
     [ coord
     | coord <- U.indices b
@@ -241,6 +235,7 @@ instance Board BinaryBoard where
     , bcolor == bpcolor val
     ]
 
+  {-# INLINE piecesCoords #-}
   piecesCoords p (BinaryBoard b) =
     [ coord
     | coord <- U.indices b
@@ -268,9 +263,9 @@ field2bin Field {..} = case fPiece of
   Nothing ->
     color2bin fColor `shiftL` 1
   Just (Piece {..}) ->
-    (color2bin pColor `shiftL` 5)
+    (color2bin pieceColor `shiftL` 5)
     .|.
-    (player2bin pPlayer `shiftL` 4)
+    (player2bin piecePlayer `shiftL` 4)
     .|.
     (color2bin fColor `shiftL` 1)
     .|.

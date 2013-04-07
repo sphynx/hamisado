@@ -13,8 +13,6 @@ import Game
 import TestData
 import Types
 
-import Data.Array.Unboxed
-import Data.Bits
 import Data.List
 import Text.Printf
 
@@ -65,7 +63,7 @@ test_moves_length2 = length (legalMoves r1) @?= 13
 test_moves_length3 = length (legalMoves r2) @?= 1
 
 perft depth leaves =
-  testCase description $ length (legalPositions depth start) @?= leaves where
+  testCase description $ length (legalPositions depth startB) @?= leaves where
     description = printf "perft d=%d (# of game tree leaves)" depth
 
 test_pass_move = let [Move from to] = legalMoves r2
@@ -79,11 +77,11 @@ test_do_pass_move =
         (piecesCount new)
         (piecesCount r2)
 
-piecesCount :: Round -> Int
-piecesCount = sum . map fromIntegral . map ((.&.) 1) . elems . unBinaryBoard . rBoard
+piecesCount :: Board b => Position b -> Int
+piecesCount p = 64 - length [ () | c <- coords, fieldIsEmpty c (pBoard p)]
 
 
-is_terminal = roundResult r4d @?= Winner White
+is_terminal = roundResult r4d  @?= Winner White
 
 between_vertical_1 = between (1,1) (1,4) @?= [(1,2), (1,3)]
 between_vertical_2 = between (2,4) (2,8) @?= [(2,5), (2,6), (2,7)]
@@ -221,7 +219,7 @@ test_alpha_beta i d n =
                "Alpha beta result does not correspond to negamax"
                (search Minimax i ThreatBasedEval r d)
                (search AlphaBeta i ThreatBasedEval r d)) $
-  legalPositions n start
+  legalPositions n startB
 
   where description =
           printf "alphabeta verified on negamax (impl=%s, d=%d, forward=%d)"
@@ -233,7 +231,7 @@ test_negascout i d n =
                "Negascout result does not correspond to alphabeta"
                (search AlphaBeta i ThreatBasedEval r d)
                (search Negascout i ThreatBasedEval r d)) $
-  legalPositions n start
+  legalPositions n startB
 
   where description =
           printf "negascout verified on alphabeta (impl=%s, d=%d, forward=%d)"
@@ -248,7 +246,7 @@ test_negascout_score i d n =
                "Negascout score does not correspond to alphabeta"
                (snd $ search AlphaBeta i ThreatBasedEval r d)
                (snd $ search Negascout i ThreatBasedEval r d)) $
-  legalPositions n start
+  legalPositions n startB
 
   where description =
           printf "negascout score verified on alphabeta (impl=%s, d=%d, forward=%d)"

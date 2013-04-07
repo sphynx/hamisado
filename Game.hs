@@ -5,6 +5,7 @@ module Game
   (
   -- Initial position.
     start
+  , startB
 
   -- Applying moves (one and many) to a position.
   , doMove
@@ -29,57 +30,63 @@ module Game
 import Data.List
 import Types
 
-start :: Round
-start = Round
-  { rBoard  = board0
-  , rPlayer = Black
-  , rMoves  = []
-  , rMoveNo = 0
+start :: Board b => Position b
+start = Position
+  { pBoard  = board0
+  , pPlayer = Black
+  , pMoves  = []
+  , pMoveNo = 0
   }
 
-doMove :: Move -> Round -> Round
-doMove m Round {..} = Round
-  { rBoard  = updateBoard m rBoard
-  , rPlayer = opponent rPlayer
-  , rMoves  = m : rMoves
-  , rMoveNo = rMoveNo + 1
+startB :: Position BinaryBoard
+startB = start
+
+doMove :: Board b => Move -> Position b -> Position b
+doMove m Position {..} = Position
+  { pBoard  = updateBoard m pBoard
+  , pPlayer = opponent pPlayer
+  , pMoves  = m : pMoves
+  , pMoveNo = pMoveNo + 1
   }
 
-doMoves :: [Move] -> Round -> Round
+doMoves :: Board b => [Move] -> Position b -> Position b
 doMoves [] r = r
 doMoves (m:ms) r =
   let r' = doMove m r
   in if isOver r then r' else doMoves ms r'
 
-roundResult :: Round -> RoundResult
-roundResult Round{..}
-  | reachedHomeRow || isDeadlock = Winner $ opponent rPlayer
+{-# SPECIALIZE roundResult :: Position BinaryBoard -> Result #-}
+roundResult :: Board b => Position b -> Result
+roundResult Position{..}
+  | reachedHomeRow || isDeadlock = Winner $ opponent pPlayer
   | otherwise                    = InProgress
 
   where
-    reachedHomeRow = case rMoves of
+    reachedHomeRow = case pMoves of
       [] -> False
-      Move _ to :_ -> snd to == homeRow rPlayer
+      Move _ to :_ -> snd to == homeRow pPlayer
 
-    isDeadlock = case rMoves of
+    isDeadlock = case pMoves of
       m:pm:_ -> isPass m && isPass pm
       _      -> False
 
-isOver :: Round -> Bool
+isOver :: Board b => Position b -> Bool
 isOver r | Winner _ <- roundResult r = True
 isOver _ = False
 
-legalPositions :: Int -> Round -> [Round]
+{-# SPECIALIZE legalPositions :: Int -> Position BinaryBoard -> [Position BinaryBoard] #-}
+legalPositions :: Board b => Int -> Position b -> [Position b]
 legalPositions 0 r = [r]
 legalPositions d r =
   [ doMove m r | m <- sortMoves $ legalMoves r ] >>= legalPositions (d - 1)
   where
-  sortMoves ms = applyLongFirstSort (rPlayer r) ms
+  sortMoves ms = applyLongFirstSort (pPlayer r) ms
 
-nextPositions :: Round -> [Round]
+nextPositions :: Board b => Position b -> [Position b]
 nextPositions = legalPositions 1
 
 -- Put longer moves first, since they are typically more forcing.
+{-# INLINE applyLongFirstSort #-}
 applyLongFirstSort :: Player -> [Move] -> [Move]
 applyLongFirstSort p = sortBy f where
   f (Move _ (_,y1)) (Move _ (_,y2)) = case p of
@@ -90,12 +97,12 @@ applyLongFirstSort p = sortBy f where
 --- Move generation.
 ----------------------------------------
 
-legalMoves :: Round -> [Move]
+legalMoves :: Board b => Position b -> [Move]
 legalMoves r | isOver r = []
 legalMoves r  = if null moves then passMove r else moves where
   moves = [ Move from to
           | from <- requiredFroms r
-          , to <- possibleTos from (rPlayer r) (rBoard r)
+          , to <- possibleTos from (pPlayer r) (pBoard r)
           ]
 
 possibleTos :: Board b => Coord -> Player -> b -> [Coord]
@@ -112,21 +119,22 @@ possibleTos (x,y) p b = case p of
   where
     takeValid = takeWhile (\to -> fieldIsEmpty to b)
 
-requiredFrom :: Move -> Round -> Coord
-requiredFrom (Move _ to) Round{..} =
-  pieceCoord rPlayer (fieldColor to rBoard) rBoard
 
-requiredFroms :: Round -> [Coord]
-requiredFroms r = case rMoves r of
-  []    -> initialFroms (rPlayer r)
+requiredFrom :: Board b => Move -> Position b -> Coord
+requiredFrom (Move _ to) Position{..} =
+  pieceCoord pPlayer (fieldColor to pBoard) pBoard
+
+requiredFroms :: Board b => Position b -> [Coord]
+requiredFroms r = case pMoves r of
+  []    -> initialFroms (pPlayer r)
   m : _ -> [ requiredFrom m r ]
 
 initialFroms :: Player -> [Coord]
 initialFroms Black = [(x,1) | x <- [1..8]]
 initialFroms White = [(x,8) | x <- [1..8]]
 
-passMove :: Round -> [Move]
-passMove r = case rMoves r of
+passMove :: Board b => Position b -> [Move]
+passMove r = case pMoves r of
   []  -> []
   m:_ -> let from = requiredFrom m r
           in [Move from from]

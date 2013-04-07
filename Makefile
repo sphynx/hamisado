@@ -63,6 +63,9 @@ etags:
 benchmark_build:
 	ghc -O2 Benchmark.hs
 
-benchmark:	benchmark_build
-	./Benchmark -o benchmark.html -u bench.csv -s 30
+bench:	benchmark_build
+	./Benchmark -o benchmark.html -u bench.csv -r board.csv -s 5 --gc losing
 	xdg-open benchmark.html
+
+core:	clean
+	ghc -ddump-simpl -dsuppress-all -O2 Game.hs >core.txt

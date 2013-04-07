@@ -51,11 +51,11 @@ solveFunction :: Conf -> SolvingResult
 solveFunction =
   solve <$> algorithm <*> implementation <*> depth
 
-currentMoveFunction :: Conf -> Round -> Int -> (PV, Int)
+currentMoveFunction :: Board b => Conf -> Position b -> Int -> (PV, Int)
 currentMoveFunction c r d =
   search (algorithm c) (implementation c) ThreatBasedEval r d
 
-humanMoves :: Conf -> Round -> IO ()
+humanMoves :: Board b => Conf -> Position b -> IO ()
 humanMoves c r0 = do
   putStr "Enter your turn: "
   turnStr <- getLine
@@ -70,7 +70,7 @@ humanMoves c r0 = do
         Winner p -> printf "Game finished. Winner: %s\n" (show p)
         InProgress -> aiMoves c r1
 
-aiMoves :: Conf -> Round -> IO ()
+aiMoves :: Board b => Conf -> Position b -> IO ()
 aiMoves c r0 = do
   let (aiPV, score) = currentMoveFunction c r0 (depth c)
       aiMove = head aiPV
@@ -88,7 +88,7 @@ parseAnalyse xs = case reads xs of
   [(i, "")] -> Just i
   _ -> Nothing
 
-analyseMoves :: Conf -> Round -> IO ()
+analyseMoves :: Board b => Conf -> Position b -> IO ()
 analyseMoves c r0 = do
   putStr "Enter your turn or depth to analyse: "
   turnStr <- getLine
@@ -133,13 +133,13 @@ main = do
       printf "Score: %d, PV: %s\n" score (show pv)
     Play ->
       case turn of
-        First   -> aiMoves c start
-        Second  -> humanMoves c start
-        Analyse -> analyseMoves c start
+        First   -> aiMoves c startB
+        Second  -> humanMoves c startB
+        Analyse -> analyseMoves c startB
     Perft -> do
       -- You can learn more about Perft here:
       -- http://chessprogramming.wikispaces.com/Perft
-      let leaves = map (reverse . rMoves) $ legalPositions depth start
+      let leaves = map (reverse . pMoves) $ legalPositions depth startB
       printf "Perft for depth=%d, total number of leaves=%d\n"
         depth (length leaves)
       mapM_ print leaves

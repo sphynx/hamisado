@@ -13,12 +13,12 @@ import Game
 import Types
 import AI.Types
 
-evalFn :: Evaluation -> (Round -> Int)
+evalFn :: Board b => Evaluation -> (Position b -> Int)
 evalFn ThreatBasedEval = threatBasedEval
 evalFn SimpleEval = simpleEval
 
-simpleEval :: Round -> Int
-simpleEval r = playerCoeff (rPlayer r) *
+simpleEval :: Board b => Position b -> Int
+simpleEval r = playerCoeff (pPlayer r) *
   case roundResult r of
     Winner Black -> posInfinity
     Winner White -> negInfinity
@@ -33,19 +33,19 @@ simpleEval r = playerCoeff (rPlayer r) *
 -- Variation length is taken into into account in solved positions to
 -- promote shortest wins and longest loses (yes, we are losing, but we
 -- should fight until the end!)
-threatBasedEval :: Round -> Int
-threatBasedEval r = playerCoeff (rPlayer r) *
+threatBasedEval :: Board b => Position b -> Int
+threatBasedEval r = playerCoeff (pPlayer r) *
 
   case roundResult r of
     Winner Black -> posInfinity - variationLen
     Winner White -> negInfinity + variationLen
     InProgress   ->
-      let b = rBoard r
+      let b = pBoard r
           ba = attackersNumber Black b
           wa = attackersNumber White b
         in ba - wa
 
-  where variationLen = length $ rMoves r
+  where variationLen = length $ pMoves r
 
 attackersNumber :: Board b => Player -> b -> Int
 attackersNumber p b = length

@@ -13,23 +13,24 @@ import AI.Types
 
 import qualified AI.Algorithms.My as Algo
 
-alphabeta :: Evaluation -> Round -> Depth -> (PV, Score)
+alphabeta :: Board b => Evaluation -> Position b -> Depth -> (PV, Score)
 alphabeta = runAlgo Algo.alphabeta
 
-negascout :: Evaluation -> Round -> Depth -> (PV, Score)
+negascout :: Board b => Evaluation -> Position b -> Depth -> (PV, Score)
 negascout = runAlgo Algo.negascout
 
-minimax :: Evaluation -> Round -> Depth -> (PV, Score)
+minimax :: Board b => Evaluation -> Position b -> Depth -> (PV, Score)
 minimax = runAlgo Algo.minimax
 
-instance Algo.GameTree Round where
+instance Board b => Algo.GameTree (Position b) where
   is_terminal = isOver
   children = nextPositions
 
-runAlgo :: ((Round -> Int) -> Depth -> Round -> (Round, Score))
-           -> Evaluation -> Round -> Depth -> (PV, Score)
+runAlgo :: Board b =>
+           ((Position b -> Int) -> Depth -> Position b -> (Position b, Score))
+           -> Evaluation -> Position b -> Depth -> (PV, Score)
 runAlgo algoFn eval r d =
    let (r1, score) = algoFn (evalFn eval) d r
-       pv = drop (rMoveNo r) $ reverse (rMoves r1)
+       pv = drop (pMoveNo r) $ reverse (pMoves r1)
    in (pv, score)
 

@@ -11,7 +11,7 @@ import qualified AI.API.My as My
 import qualified AI.API.Tzaar as Tzaar
 import qualified AI.API.GameTree as GameTree
 
-search :: Algorithm -> Implementation -> Evaluation -> Round -> Depth -> (PV, Score)
+search :: Board b => Algorithm -> Implementation -> Evaluation -> Position b -> Depth -> (PV, Score)
 search Minimax My = My.minimax
 search AlphaBeta My = My.alphabeta
 search Negascout My = My.negascout
