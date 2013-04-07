@@ -47,8 +47,7 @@ pieceCoords  ?          ?
 
 boardBench :: Board b => Position b -> Int
 boardBench r0 =
-  let colors = [minBound .. maxBound]
-      -- 13 update boards
+  let -- 13 update boards
       b = pBoard $ doMoves testMoves r0
       -- 64 field is empty
       empties = length $ filter (flip fieldIsEmpty b) coords

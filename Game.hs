@@ -6,6 +6,7 @@ module Game
   -- Initial position.
     start
   , startB
+  , startN
 
   -- Applying moves (one and many) to a position.
   , doMove
@@ -25,10 +26,16 @@ module Game
   -- Positions which may result from given position by applying one
   -- move.
   , nextPositions
+
+  -- Board representation.
+  , module Board.Binary
   ) where
 
 import Data.List
 import Types
+
+import Board.Binary
+import Board.Naive
 
 start :: Board b => Position b
 start = Position
@@ -40,6 +47,9 @@ start = Position
 
 startB :: Position BinaryBoard
 startB = start
+
+startN :: Position NaiveBoard
+startN = start
 
 doMove :: Board b => Move -> Position b -> Position b
 doMove m Position {..} = Position
