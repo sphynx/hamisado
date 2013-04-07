@@ -6,10 +6,12 @@
 *.hp
 *.html
 *.zip
+*.csv
 TAGS
 Hamisado
 Prof-Hamisado
 Tests
+Benchmark
 .hpc/
 cabal-dev/
 dist/

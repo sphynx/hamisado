@@ -60,8 +60,9 @@ etags:
 	rm -f TAGS
 	fast-tags -e -v -R .
 
-benchmark:
-	sh -c "time $(PROG) $(BENCH_OPTS) -d 7"
-	echo "Baseline time: 0.61s"
-	sh -c "time $(PROG) $(BENCH_OPTS) -d 9"
-	echo "Baseline time: 2.73s"
+benchmark_build:
+	ghc -O2 Benchmark.hs
+
+benchmark:	benchmark_build
+	./Benchmark -o benchmark.html -u bench.csv -s 30
+	xdg-open benchmark.html

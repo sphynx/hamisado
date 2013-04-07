@@ -15,9 +15,6 @@ import Control.Arrow
 import Data.List
 import Data.Ord
 
--- import Data.IORef
--- import System.IO.Unsafe
-
 class GameTree a where
   is_terminal :: a -> Bool
   children    :: a -> [a]
