@@ -45,11 +45,11 @@ heap:	profile_build
 	rsvg-view-3 $(PROF_PROG).svg
 
 clean:
-	rm -v -f $(PROG) $(PROF_PROG) Tests
+	rm -v -f $(PROG) $(PROF_PROG) Tests Benchmark
 	find . \( -name '*.hi' -o -name '*.o' -o -name '*.tix' \) -delete
 
 clean_data:	clean
-	rm -v -f $(PROF_PROG).hp $(PROF_PROG).prof $(PROF_PROG).png $(PROF_PROG).svg *.html *.zip
+	rm -v -f $(PROF_PROG).hp $(PROF_PROG).prof $(PROF_PROG).png $(PROF_PROG).svg *.html *.zip *.csv
 	rm -r -f hpc
 	rm -r -f .hpc
 
