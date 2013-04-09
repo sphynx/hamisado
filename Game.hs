@@ -3,10 +3,11 @@
 
 module Game
   (
-  -- Initial position.
-    start
-  , startB
-  , startN
+  -- Initial position using default board representation.
+    initialPosition
+
+  -- Initial position (polymorphic).
+  , position0
 
   -- Applying moves (one and many) to a position.
   , doMove
@@ -28,28 +29,24 @@ module Game
   , nextPositions
 
   -- Board representation.
-  , module Board.Binary
+  , module Board.UVectorBased
   ) where
 
-import Data.List
 import Types
+import Utils
 
-import Board.Binary
-import Board.Naive
+import Board.UVectorBased
 
-start :: Board b => Position b
-start = Position
+position0 :: Board b => Position b
+position0 = Position
   { pBoard  = board0
   , pPlayer = Black
   , pMoves  = []
   , pMoveNo = 0
   }
 
-startB :: Position BinaryBoard
-startB = start
-
-startN :: Position NaiveBoard
-startN = start
+initialPosition :: Position VBoard
+initialPosition = position0
 
 doMove :: Board b => Move -> Position b -> Position b
 doMove m Position {..} = Position
@@ -65,7 +62,7 @@ doMoves (m:ms) r =
   let r' = doMove m r
   in if isOver r then r' else doMoves ms r'
 
-{-# SPECIALIZE roundResult :: Position BinaryBoard -> Result #-}
+{-# SPECIALIZE roundResult :: Position VBoard -> Result #-}
 roundResult :: Board b => Position b -> Result
 roundResult Position{..}
   | reachedHomeRow || isDeadlock = Winner $ opponent pPlayer
@@ -84,25 +81,13 @@ isOver :: Board b => Position b -> Bool
 isOver r | Winner _ <- roundResult r = True
 isOver _ = False
 
-{-# SPECIALIZE legalPositions :: Int -> Position BinaryBoard -> [Position BinaryBoard] #-}
+{-# SPECIALIZE legalPositions :: Int -> Position VBoard -> [Position VBoard] #-}
 legalPositions :: Board b => Int -> Position b -> [Position b]
 legalPositions 0 r = [r]
-legalPositions d r =
-  [ doMove m r | m <- sortMoves $ legalMoves r ] >>= legalPositions (d - 1)
-  where
-  sortMoves ms = applyLongFirstSort (pPlayer r) ms
+legalPositions d r = [ doMove m r | m <- legalMoves r ] >>= legalPositions (d - 1)
 
 nextPositions :: Board b => Position b -> [Position b]
 nextPositions = legalPositions 1
-
--- Put longer moves first, since they are typically more forcing.
-{-# INLINE applyLongFirstSort #-}
-applyLongFirstSort :: Player -> [Move] -> [Move]
-applyLongFirstSort p = sortBy f where
-  f (Move _ (_,y1)) (Move _ (_,y2)) = case p of
-    Black -> compare y2 y1
-    White -> compare y1 y2
-
 
 --- Move generation.
 ----------------------------------------
@@ -117,18 +102,22 @@ legalMoves r  = if null moves then passMove r else moves where
 
 possibleTos :: Board b => Coord -> Player -> b -> [Coord]
 possibleTos (x,y) p b = case p of
-  Black ->
-       takeValid [ (x,  y+i) | i <- [1 .. 8-y] ]              -- straight up
-    ++ takeValid [ (x-i,y+i) | i <- [1 .. min (x-1) (8-y)] ]  -- left up
-    ++ takeValid [ (x+i,y+i) | i <- [1 .. min (8-x) (8-y)] ]  -- right up
-  White ->
-       takeValid [ (x,  y-i) | i <- [1 .. y-1] ]              -- straight down
-    ++ takeValid [ (x-i,y-i) | i <- [1 .. min (x-1) (y-1)] ]  -- left down
-    ++ takeValid [ (x+i,y-i) | i <- [1 .. min (8-x) (y-1)] ]  -- right down
+  -- Generate move in nicely sorted order, so that we don't need to
+  -- sort them later. We put longer moves first, since they are
+  -- typically more forcing.
+  Black -> reverse $ merge (\ (_,y1) (_,y2) -> y1 < y2)
+      [ takeValid [ (x,  y+i) | i <- [1 .. 8-y] ]              -- straight up
+      , takeValid [ (x-i,y+i) | i <- [1 .. min (x-1) (8-y)] ]  -- left up
+      , takeValid [ (x+i,y+i) | i <- [1 .. min (8-x) (8-y)] ]  -- right up
+      ]
+  White -> reverse $ merge (\ (_,y1) (_,y2) -> y1 > y2)
+      [ takeValid [ (x,  y-i) | i <- [1 .. y-1] ]              -- straight down
+      , takeValid [ (x-i,y-i) | i <- [1 .. min (x-1) (y-1)] ]  -- left down
+      , takeValid [ (x+i,y-i) | i <- [1 .. min (8-x) (y-1)] ]  -- right down
+      ]
 
   where
     takeValid = takeWhile (\to -> fieldIsEmpty to b)
-
 
 requiredFrom :: Board b => Move -> Position b -> Coord
 requiredFrom (Move _ to) Position{..} =

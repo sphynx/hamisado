@@ -8,8 +8,8 @@ module Types
  , Score
  , Player(..)
  , Position(..)
- , Board(..)
  , Result(..)
+ , Board(..)
  , opponent
  , posInfinity
  , negInfinity
@@ -86,14 +86,6 @@ parseMove _ = Nothing
 type Depth = Int
 type Score = Int
 
--- We don't use minBound/maxBound here because it messes with algorithms in
--- Game_tree.
-negInfinity :: Int
-negInfinity = -1000000000
-
-posInfinity :: Int
-posInfinity = 1000000000
-
 class Board a where
   board0       :: a
   updateBoard  :: Move -> a -> a
@@ -102,4 +94,12 @@ class Board a where
   pieceCoord   :: Player -> Color -> a -> Coord
   piecesCoords :: Player -> a -> [Coord]
 
+
+-- We don't use minBound/maxBound here because it messes with algorithms in
+-- Game_tree.
+negInfinity :: Int
+negInfinity = -1000000000
+
+posInfinity :: Int
+posInfinity = 1000000000
 

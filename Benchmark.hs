@@ -3,8 +3,11 @@ import Criterion.Main
 
 import AI
 import Analysis
-import Types
+import Board.Naive
+import Board.UVectorBased
+import Board.UArrayBased
 import Game
+import Types
 
 instance NFData Move where
   rnf (Move x y) = rnf x `seq` rnf y
@@ -73,8 +76,9 @@ main = defaultMain
 
  , bgroup "board"
     [ bcompare
-    [ bench "normal" $ nf boardBench (start :: Position NormalBoard)
-    , bench "binary" $ nf boardBench (start :: Position BinaryBoard)
+    [ bench "normal"  $ nf boardBench (position0 :: Position NaiveBoard)
+    , bench "uarray"  $ nf boardBench (position0 :: Position ABoard)
+    , bench "uvector" $ nf boardBench (position0 :: Position VBoard)
     ]
     ]
  ]

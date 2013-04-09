@@ -63,7 +63,7 @@ test_moves_length2 = length (legalMoves r1) @?= 13
 test_moves_length3 = length (legalMoves r2) @?= 1
 
 perft depth leaves =
-  testCase description $ length (legalPositions depth startB) @?= leaves where
+  testCase description $ length (legalPositions depth initialPosition) @?= leaves where
     description = printf "perft d=%d (# of game tree leaves)" depth
 
 test_pass_move = let [Move from to] = legalMoves r2
@@ -219,7 +219,7 @@ test_alpha_beta i d n =
                "Alpha beta result does not correspond to negamax"
                (search Minimax i ThreatBasedEval r d)
                (search AlphaBeta i ThreatBasedEval r d)) $
-  legalPositions n startB
+  legalPositions n initialPosition
 
   where description =
           printf "alphabeta verified on negamax (impl=%s, d=%d, forward=%d)"
@@ -231,7 +231,7 @@ test_negascout i d n =
                "Negascout result does not correspond to alphabeta"
                (search AlphaBeta i ThreatBasedEval r d)
                (search Negascout i ThreatBasedEval r d)) $
-  legalPositions n startB
+  legalPositions n initialPosition
 
   where description =
           printf "negascout verified on alphabeta (impl=%s, d=%d, forward=%d)"
@@ -246,7 +246,7 @@ test_negascout_score i d n =
                "Negascout score does not correspond to alphabeta"
                (snd $ search AlphaBeta i ThreatBasedEval r d)
                (snd $ search Negascout i ThreatBasedEval r d)) $
-  legalPositions n startB
+  legalPositions n initialPosition
 
   where description =
           printf "negascout score verified on alphabeta (impl=%s, d=%d, forward=%d)"

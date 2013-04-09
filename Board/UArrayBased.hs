@@ -30,8 +30,8 @@ player on it.
 
 -}
 
-module Board.Binary
-  ( BinaryBoard(..)
+module Board.UArrayBased
+  ( ABoard(..)
   ) where
 
 import Data.Bits
@@ -41,47 +41,46 @@ import Data.Array.Unboxed
 import Board.Common
 import Types
 
-newtype BinaryBoard =
-  BinaryBoard { unBinaryBoard :: UArray Coord Word8 }
+newtype ABoard =
+  ABoard { unABoard :: UArray Coord Word8 }
   deriving (Eq, Show)
 
-instance Board BinaryBoard where
-  board0 = BinaryBoard $
+instance Board ABoard where
+  board0 = ABoard $
            listArray ((1,1), (8,8)) $
            map field2bin $ initialPosition
 
   {-# INLINE updateBoard #-}
   updateBoard (Move from to) b | from == to = b
-  updateBoard (Move from to) (BinaryBoard b) =
+  updateBoard (Move from to) (ABoard b) =
     let fromField = b ! from
         fromColor = bfcolor fromField
         fromPiece = fromField `shiftR` 4
         toColor   = bfcolor $ b ! to
-    in BinaryBoard $ b //
+    in ABoard $ b //
        [ (to,   fromPiece `shiftL` 4 .|. toColor `shiftL` 1 .|. 1)
        , (from, fromColor `shiftL` 1)
        ]
 
   {-# INLINE fieldIsEmpty #-}
-  fieldIsEmpty c (BinaryBoard b) = bfempty $ b ! c
+  fieldIsEmpty c (ABoard b) = bfempty $ b ! c
 
   {-# INLINE fieldColor #-}
-  fieldColor c (BinaryBoard b) = bin2color $ bfcolor $ b ! c
+  fieldColor c (ABoard b) = bin2color $ bfcolor $ b ! c
 
   {-# INLINE pieceCoord #-}
-  pieceCoord p color (BinaryBoard b) = head
+  pieceCoord p color (ABoard b) = head
     [ coord
     | coord <- indices b
     , let val = b ! coord
     , let bcolor = color2bin color
     , let bplayer = player2bin p
-    , not $ bfempty val
-    , bplayer == bpplayer val
-    , bcolor == bpcolor val
+    , let mask = (bcolor `shiftL` 5) .|. (bplayer `shiftL` 4) .|. 1
+    , mask == val .&. 0xF1 -- 11110001
     ]
 
   {-# INLINE piecesCoords #-}
-  piecesCoords p (BinaryBoard b) =
+  piecesCoords p (ABoard b) =
     [ coord
     | coord <- indices b
     , let val = b ! coord
@@ -89,7 +88,6 @@ instance Board BinaryBoard where
     , not $ bfempty val
     , bplayer == bpplayer val
     ]
-
 
 bfcolor :: Word8 -> Word8
 bfcolor w = w `shiftR` 1 .&. 7 {- 0b111 -}
@@ -99,9 +97,6 @@ bfempty w = w .&. 1 == 0
 
 bpplayer :: Word8 -> Word8
 bpplayer w = w `shiftR` 4 .&. 1
-
-bpcolor :: Word8 -> Word8
-bpcolor w = w `shiftR` 5
 
 field2bin :: Field -> Word8
 field2bin Field {..} = case fPiece of
@@ -140,4 +135,8 @@ bin2player :: Word8 -> Player
 bin2player 0 = White
 bin2player 1 = Black
 bin2player x = error $ "Unexpected binary for player" ++ show x
+
+bpcolor :: Word8 -> Word8
+bpcolor w = w `shiftR` 5
+
 -}

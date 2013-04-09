@@ -133,13 +133,13 @@ main = do
       printf "Score: %d, PV: %s\n" score (show pv)
     Play ->
       case turn of
-        First   -> aiMoves c startB
-        Second  -> humanMoves c startB
-        Analyse -> analyseMoves c startB
+        First   -> aiMoves c initialPosition
+        Second  -> humanMoves c initialPosition
+        Analyse -> analyseMoves c initialPosition
     Perft -> do
       -- You can learn more about Perft here:
       -- http://chessprogramming.wikispaces.com/Perft
-      let leaves = map (reverse . pMoves) $ legalPositions depth startB
+      let leaves = map (reverse . pMoves) $ legalPositions depth initialPosition
       printf "Perft for depth=%d, total number of leaves=%d\n"
         depth (length leaves)
       mapM_ print leaves

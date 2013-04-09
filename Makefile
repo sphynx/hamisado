@@ -67,5 +67,9 @@ bench:	benchmark_build
 	./Benchmark -o benchmark.html -u bench.csv -r board.csv -s 5 --gc losing
 	xdg-open benchmark.html
 
+bench_board:	benchmark_build
+	./Benchmark -o benchmark.html -u bench.csv -r board.csv --gc board
+	xdg-open benchmark.html
+
 core:	clean
 	ghc -ddump-simpl -dsuppress-all -O2 Game.hs >core.txt

@@ -26,7 +26,7 @@ toSolvingResult x
 
 solve :: Algorithm -> Implementation -> Depth ->  SolvingResult
 solve a i d = toSolvingResult $ snd $
-              search a i SimpleEval startB d
+              search a i SimpleEval initialPosition d
 
 naiveSolve :: Board b => Depth -> Position b -> SolvingResult
 naiveSolve _ r | Winner p <- roundResult r = Solved p
@@ -51,17 +51,17 @@ naiveSolve depth r =
 
 losingFirstMovesNaive :: Int -> [Move]
 losingFirstMovesNaive depth =
-  let variations = nextPositions startB
+  let variations = nextPositions initialPosition
       solutions = map (naiveSolve depth) variations
       varsols = variations `zip` solutions
   in [ head $ pMoves v | (v,s) <- varsols, Solved {} <- [s]]
 
 losingFirstMoves :: Algorithm -> Implementation -> Depth -> [Move]
 losingFirstMoves a i depth =
-  let firstMoves = nextPositions startB
+  let firstMoves = nextPositions initialPosition
       solutions = map (\r -> toSolvingResult $ snd $ search a i SimpleEval r depth) firstMoves
       movesSolutions = firstMoves `zip` solutions
   in [ head $ pMoves r | (r,s) <- movesSolutions, Solved {} <- [s]]
 
 bestMove :: Algorithm -> Implementation -> Depth -> (PV, Int)
-bestMove a i = search a i ThreatBasedEval startB
+bestMove a i = search a i ThreatBasedEval initialPosition
