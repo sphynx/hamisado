@@ -94,23 +94,25 @@ nextPositions = legalPositions 1
 
 legalMoves :: Board b => Position b -> [Move]
 legalMoves r | isOver r = []
-legalMoves r  = if null moves then passMove r else moves where
+legalMoves r = if null moves then passMove r else moves where
   moves = [ Move from to
           | from <- requiredFroms r
           , to <- possibleTos from (pPlayer r) (pBoard r)
           ]
 
 possibleTos :: Board b => Coord -> Player -> b -> [Coord]
-possibleTos (x,y) p b = case p of
+possibleTos (x,y) p b =
   -- Generate move in nicely sorted order, so that we don't need to
   -- sort them later. We put longer moves first, since they are
   -- typically more forcing.
-  Black -> reverse $ merge (\ (_,y1) (_,y2) -> y1 < y2)
+  reverse $ mergeSorted (longerFirst p snd) $
+  case p of
+    Black ->
       [ takeValid [ (x,  y+i) | i <- [1 .. 8-y] ]              -- straight up
       , takeValid [ (x-i,y+i) | i <- [1 .. min (x-1) (8-y)] ]  -- left up
       , takeValid [ (x+i,y+i) | i <- [1 .. min (8-x) (8-y)] ]  -- right up
       ]
-  White -> reverse $ merge (\ (_,y1) (_,y2) -> y1 > y2)
+    White ->
       [ takeValid [ (x,  y-i) | i <- [1 .. y-1] ]              -- straight down
       , takeValid [ (x-i,y-i) | i <- [1 .. min (x-1) (y-1)] ]  -- left down
       , takeValid [ (x+i,y-i) | i <- [1 .. min (8-x) (y-1)] ]  -- right down
@@ -118,6 +120,11 @@ possibleTos (x,y) p b = case p of
 
   where
     takeValid = takeWhile (fieldIsEmpty b)
+
+longerFirst :: Player -> (a -> Int) -> a -> a -> Bool
+longerFirst p f y1 y2 = case p of
+  Black -> f y1 < f y2
+  White -> f y1 > f y2
 
 requiredFrom :: Board b => Position b -> Move -> Coord
 requiredFrom Position{..} (Move _ to) =
