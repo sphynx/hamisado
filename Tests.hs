@@ -78,7 +78,7 @@ test_do_pass_move =
         (piecesCount r2)
 
 piecesCount :: Board b => Position b -> Int
-piecesCount p = 64 - length [ () | c <- coords, fieldIsEmpty c (pBoard p)]
+piecesCount p = 64 - length [ () | c <- coords, fieldIsEmpty (pBoard p) c]
 
 
 is_terminal = roundResult r4d  @?= Winner White

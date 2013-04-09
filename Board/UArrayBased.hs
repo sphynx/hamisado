@@ -63,7 +63,7 @@ instance Board ABoard where
        ]
 
   {-# INLINE fieldIsEmpty #-}
-  fieldIsEmpty c (ABoard b) = bfempty $ b ! c
+  fieldIsEmpty (ABoard b) c = bfempty $ b ! c
 
   {-# INLINE fieldColor #-}
   fieldColor c (ABoard b) = bin2color $ bfcolor $ b ! c

@@ -25,7 +25,7 @@ instance Board NaiveBoard where
             , (from, Field fromColor Nothing)
             ]
 
-  fieldIsEmpty c (NaiveBoard b) = isNothing $ fPiece $ b ! c
+  fieldIsEmpty (NaiveBoard b) c = isNothing $ fPiece $ b ! c
 
   fieldColor c (NaiveBoard b) = fColor $ b ! c
 

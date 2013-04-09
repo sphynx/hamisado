@@ -31,7 +31,7 @@ instance Board VBoard where
          , (from_ix, fromColor `shiftL` 1)
          ]
 
-    fieldIsEmpty c (VBoard b) = bfempty $ V.unsafeIndex b (ix c)
+    fieldIsEmpty (VBoard b) c = bfempty $ V.unsafeIndex b (ix c)
 
     fieldColor c (VBoard b) = bin2color $ bfcolor $ V.unsafeIndex b (ix c)
 

@@ -89,7 +89,7 @@ type Score = Int
 class Board a where
   board0       :: a
   updateBoard  :: Move -> a -> a
-  fieldIsEmpty :: Coord -> a -> Bool
+  fieldIsEmpty :: a -> Coord -> Bool
   fieldColor   :: Coord -> a -> Color
   pieceCoord   :: Player -> Color -> a -> Coord
   piecesCoords :: Player -> a -> [Coord]

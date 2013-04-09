@@ -79,7 +79,7 @@ targets Black (x,y) =
 
 freeWay :: Board a => Coord -> Coord -> a -> Bool
 freeWay from to b =
-  all (flip fieldIsEmpty b) $ to : between from to
+  all (fieldIsEmpty b) $ to : between from to
 
 between :: Coord -> Coord -> [Coord]
 between (x1,y1) (x2,y2)

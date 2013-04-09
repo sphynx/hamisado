@@ -117,7 +117,7 @@ possibleTos (x,y) p b = case p of
       ]
 
   where
-    takeValid = takeWhile (\to -> fieldIsEmpty to b)
+    takeValid = takeWhile (fieldIsEmpty b)
 
 requiredFrom :: Board b => Move -> Position b -> Coord
 requiredFrom (Move _ to) Position{..} =

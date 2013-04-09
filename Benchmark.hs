@@ -53,7 +53,7 @@ boardBench r0 =
   let -- 13 update boards
       b = pBoard $ doMoves testMoves r0
       -- 64 field is empty
-      empties = length $ filter (flip fieldIsEmpty b) coords
+      empties = length $ filter (fieldIsEmpty b) coords
       -- 16 field color
       reds = length [ () | x <- [1..2], y <- [1..8], let col = fieldColor (x,y) b, col == Red]
       -- 16 piece coords
