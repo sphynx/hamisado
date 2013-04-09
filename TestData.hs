@@ -3,12 +3,12 @@ module TestData where
 import Types
 import Game
 
-r1, r2, r3 :: Position VBoard
+r1, r2, r3 :: GamePosition
 r1 = doMoves [Move (4,1) (4,7)] initialPosition
 r2 = doMoves [Move (7,8) (2,3)] r1
 r3 = doMoves [Move (4,7) (4,7)] r2
 
-r4a, r4b, r4c, r4d :: Position VBoard
+r4a, r4b, r4c, r4d :: GamePosition
 r4a = doMoves [Move (2,3) (1,2)] r3
 r4b = doMoves [Move (2,3) (2,2)] r3
 r4c = doMoves [Move (2,3) (3,2)] r3

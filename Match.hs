@@ -12,12 +12,12 @@ import Game
 import AI
 import Text.Printf
 
-type PlayStrategy = Position VBoard -> IO Move
+type PlayStrategy = GamePosition -> IO Move
 
 match :: PlayStrategy -> PlayStrategy -> IO ()
 match = step initialPosition
 
-step :: Position VBoard -> PlayStrategy -> PlayStrategy -> IO ()
+step :: GamePosition -> PlayStrategy -> PlayStrategy -> IO ()
 step p0 s1 s2 = do
   printf "* %s's turn\n" (show $ pPlayer p0)
   move <- s1 p0

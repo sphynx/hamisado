@@ -3,8 +3,9 @@
 
 module Game
   (
-  -- Initial position using default board representation.
+  -- Initial position using default board representation and its type.
     initialPosition
+  , GamePosition
 
   -- Initial position (polymorphic).
   , position0
@@ -27,15 +28,14 @@ module Game
   -- Positions which may result from given position by applying one
   -- move.
   , nextPositions
-
-  -- Board representation.
-  , module Board.UVectorBased
   ) where
 
 import Types
 import Utils
 
-import Board.UVectorBased
+import Board.VectorBased
+
+type GamePosition = Position VBoard
 
 position0 :: Board b => Position b
 position0 = Position
@@ -45,7 +45,7 @@ position0 = Position
   , pMoveNo = 0
   }
 
-initialPosition :: Position VBoard
+initialPosition :: GamePosition
 initialPosition = position0
 
 doMove :: Board b => Move -> Position b -> Position b
@@ -57,10 +57,10 @@ doMove m Position {..} = Position
   }
 
 doMoves :: Board b => [Move] -> Position b -> Position b
-doMoves [] r = r
-doMoves (m:ms) r =
-  let r' = doMove m r
-  in if isOver r then r' else doMoves ms r'
+doMoves [] p = p
+doMoves (m:ms) p =
+  let p' = doMove m p
+  in if isOver p then p' else doMoves ms p'
 
 {-# SPECIALIZE roundResult :: Position VBoard -> Result #-}
 roundResult :: Board b => Position b -> Result
@@ -78,13 +78,13 @@ roundResult Position{..}
       _      -> False
 
 isOver :: Board b => Position b -> Bool
-isOver r | Winner _ <- roundResult r = True
+isOver p | Winner _ <- roundResult p = True
 isOver _ = False
 
 {-# SPECIALIZE legalPositions :: Int -> Position VBoard -> [Position VBoard] #-}
 legalPositions :: Board b => Int -> Position b -> [Position b]
-legalPositions 0 r = [r]
-legalPositions d r = [ doMove m r | m <- legalMoves r ] >>= legalPositions (d - 1)
+legalPositions 0 p = [p]
+legalPositions d p = [ doMove m p | m <- legalMoves p ] >>= legalPositions (d - 1)
 
 nextPositions :: Board b => Position b -> [Position b]
 nextPositions = legalPositions 1
@@ -102,8 +102,8 @@ legalMoves r = if null moves then passMove r else moves where
 
 possibleTos :: Board b => Coord -> Player -> b -> [Coord]
 possibleTos (x,y) p b =
-  -- Generate move in nicely sorted order, so that we don't need to
-  -- sort them later. We put longer moves first, since they are
+  -- Generate moves in the nicely sorted order, so that we don't need
+  -- to sort them later. We put longer moves first, since they are
   -- typically more forcing.
   reverse $ mergeSorted (longerFirst p snd) $
   case p of
@@ -131,18 +131,18 @@ requiredFrom Position{..} (Move _ to) =
   pieceCoord pBoard pPlayer (fieldColor pBoard to)
 
 requiredFroms :: Board b => Position b -> [Coord]
-requiredFroms r = case pMoves r of
-  []    -> initialFroms (pPlayer r)
-  m : _ -> [ requiredFrom r m ]
+requiredFroms p = case pMoves p of
+  []    -> initialFroms (pPlayer p)
+  m : _ -> [ requiredFrom p m ]
 
 initialFroms :: Player -> [Coord]
 initialFroms Black = [(x,1) | x <- [1..8]]
 initialFroms White = [(x,8) | x <- [1..8]]
 
 passMove :: Board b => Position b -> [Move]
-passMove r = case pMoves r of
+passMove p = case pMoves p of
   []  -> []
-  m:_ -> let from = requiredFrom r m
+  m:_ -> let from = requiredFrom p m
           in [Move from from]
 
 isPass :: Move -> Bool

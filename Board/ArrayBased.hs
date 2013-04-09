@@ -30,7 +30,7 @@ player on it.
 
 -}
 
-module Board.UArrayBased
+module Board.ArrayBased
   ( ABoard(..)
   ) where
 

@@ -6,6 +6,7 @@ import Analysis
 import Board.Naive
 import Board.UVectorBased
 import Board.UArrayBased
+import Board.Vector16
 import Game
 import Types
 
@@ -79,6 +80,7 @@ main = defaultMain
     [ bench "normal"  $ nf boardBench (position0 :: Position NaiveBoard)
     , bench "uarray"  $ nf boardBench (position0 :: Position ABoard)
     , bench "uvector" $ nf boardBench (position0 :: Position VBoard)
+    , bench "uvector16" $ nf boardBench (position0 :: Position VBoard16)
     ]
     ]
  ]

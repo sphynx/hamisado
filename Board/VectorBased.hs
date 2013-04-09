@@ -3,7 +3,7 @@
 {- See the description of the binary format used for pieces/fields
 encoding in Board.UArrayBased -}
 
-module Board.UVectorBased
+module Board.VectorBased
   ( VBoard(..)
   ) where
 
@@ -15,7 +15,9 @@ import qualified Data.Vector.Unboxed as V
 import Board.Common
 import Types
 
-newtype VBoard = VBoard (V.Vector Word8)
+type W = Word16
+
+newtype VBoard = VBoard (V.Vector W)
 
 instance Board VBoard where
 
@@ -50,13 +52,13 @@ instance Board VBoard where
         in map idxToCoord $ V.toList $ V.findIndices (isPieceOfPlayer bplayer) b
 
 {-# INLINE isPieceOfPlayerAndColor #-}
-isPieceOfPlayerAndColor :: Word8 -> Word8 -> Word8 -> Bool
+isPieceOfPlayerAndColor :: W -> W -> W -> Bool
 isPieceOfPlayerAndColor color player = \val ->
   let mask = (color `shiftL` 5) .|. (player `shiftL` 4) .|. 1
   in mask == val .&. 0xF1 -- 11110001
 
 {-# INLINE isPieceOfPlayer #-}
-isPieceOfPlayer :: Word8 -> Word8 -> Bool
+isPieceOfPlayer :: W -> W -> Bool
 isPieceOfPlayer player = \val ->
   let mask = (player `shiftL` 4) .|. 1
   in mask == val .&. 0x11 -- 00010001
@@ -69,13 +71,13 @@ idxToCoord i =
   let (q,r) = i `quotRem` 8
   in (q+1, r+1)
 
-bfcolor :: Word8 -> Word8
+bfcolor :: W -> W
 bfcolor w = w `shiftR` 1 .&. 7 {- 0b111 -}
 
-bfempty :: Word8 -> Bool
+bfempty :: W -> Bool
 bfempty w = w .&. 1 == 0
 
-field2bin :: Field -> Word8
+field2bin :: Field -> W
 field2bin Field {..} = case fPiece of
   Nothing ->
     color2bin fColor `shiftL` 1
@@ -88,11 +90,11 @@ field2bin Field {..} = case fPiece of
     .|.
     1
 
-bin2color :: Word8 -> Color
+bin2color :: W -> Color
 bin2color = toEnum . fromIntegral
 
-color2bin :: Color -> Word8
+color2bin :: Color -> W
 color2bin = fromIntegral . fromEnum
 
-player2bin :: Player -> Word8
+player2bin :: Player -> W
 player2bin = fromIntegral . fromEnum
