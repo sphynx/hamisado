@@ -8,16 +8,15 @@ import Types
 import Data.Array
 import Data.Maybe
 
-newtype NaiveBoard =
-  NaiveBoard { unNormalBoard :: Array Coord Field }
+newtype NaiveBoard = NaiveBoard (Array Coord Field)
   deriving (Show)
 
 instance Board NaiveBoard where
 
   board0 = NaiveBoard $ listArray ((1,1), (8,8)) initialPosition
 
-  updateBoard (Move from to) b | from == to = b
-  updateBoard (Move from to) (NaiveBoard b) =
+  updateBoard b (Move from to) | from == to = b
+  updateBoard (NaiveBoard b) (Move from to) =
     let Field fromColor fromPiece = b ! from
         Field toColor   _         = b ! to
     in NaiveBoard $ b //
@@ -27,9 +26,9 @@ instance Board NaiveBoard where
 
   fieldIsEmpty (NaiveBoard b) c = isNothing $ fPiece $ b ! c
 
-  fieldColor c (NaiveBoard b) = fColor $ b ! c
+  fieldColor (NaiveBoard b) c = fColor $ b ! c
 
-  pieceCoord p color (NaiveBoard b) = head
+  pieceCoord (NaiveBoard b) p color = head
     [ coord
     | coord <- indices b
     , Just piece <- [fPiece $ b ! coord]
@@ -37,7 +36,7 @@ instance Board NaiveBoard where
     , pieceColor piece == color
     ]
 
-  piecesCoords p (NaiveBoard b) =
+  piecesCoords (NaiveBoard b) p =
     [ coord
     | coord <- indices b
     , Just piece <- [fPiece $ b ! coord]

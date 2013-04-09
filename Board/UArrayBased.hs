@@ -41,8 +41,7 @@ import Data.Array.Unboxed
 import Board.Common
 import Types
 
-newtype ABoard =
-  ABoard { unABoard :: UArray Coord Word8 }
+newtype ABoard = ABoard (UArray Coord Word8)
   deriving (Eq, Show)
 
 instance Board ABoard where
@@ -51,8 +50,8 @@ instance Board ABoard where
            map field2bin $ initialPosition
 
   {-# INLINE updateBoard #-}
-  updateBoard (Move from to) b | from == to = b
-  updateBoard (Move from to) (ABoard b) =
+  updateBoard b (Move from to) | from == to = b
+  updateBoard (ABoard b) (Move from to) =
     let fromField = b ! from
         fromColor = bfcolor fromField
         fromPiece = fromField `shiftR` 4
@@ -66,10 +65,10 @@ instance Board ABoard where
   fieldIsEmpty (ABoard b) c = bfempty $ b ! c
 
   {-# INLINE fieldColor #-}
-  fieldColor c (ABoard b) = bin2color $ bfcolor $ b ! c
+  fieldColor (ABoard b) c = bin2color $ bfcolor $ b ! c
 
   {-# INLINE pieceCoord #-}
-  pieceCoord p color (ABoard b) = head
+  pieceCoord (ABoard b) p color = head
     [ coord
     | coord <- indices b
     , let val = b ! coord
@@ -80,7 +79,7 @@ instance Board ABoard where
     ]
 
   {-# INLINE piecesCoords #-}
-  piecesCoords p (ABoard b) =
+  piecesCoords (ABoard b) p =
     [ coord
     | coord <- indices b
     , let val = b ! coord
@@ -118,25 +117,4 @@ color2bin :: Color -> Word8
 color2bin = fromIntegral . fromEnum
 
 player2bin :: Player -> Word8
-player2bin White = 0
-player2bin Black = 1
-
-{-
-bin2field :: Word8 -> Field
-bin2field w =
-  let empty  = w .&. 1 == 0
-      fcolor = bin2color  $ w `shiftR` 1 .&. 7
-      player = bin2player $ w `shiftR` 4 .&. 1
-      pcolor = bin2color  $ w `shiftR` 5
-  in if empty then Field fcolor Nothing
-              else Field fcolor (Just $ Piece player pcolor)
-
-bin2player :: Word8 -> Player
-bin2player 0 = White
-bin2player 1 = Black
-bin2player x = error $ "Unexpected binary for player" ++ show x
-
-bpcolor :: Word8 -> Word8
-bpcolor w = w `shiftR` 5
-
--}
+player2bin = fromIntegral . fromEnum

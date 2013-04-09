@@ -55,9 +55,9 @@ boardBench r0 =
       -- 64 field is empty
       empties = length $ filter (fieldIsEmpty b) coords
       -- 16 field color
-      reds = length [ () | x <- [1..2], y <- [1..8], let col = fieldColor (x,y) b, col == Red]
+      reds = length [ () | x <- [1..2], y <- [1..8], let col = fieldColor b (x,y), col == Red]
       -- 16 piece coords
-      x = sum [ x + y | p <- [Black, White], c <- colors, let (x,y) = pieceCoord p c b]
+      x = sum [ x + y | p <- [Black, White], c <- colors, let (x,y) = pieceCoord b p c ]
    in empties + reds + x
 
 main :: IO ()

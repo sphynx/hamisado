@@ -86,13 +86,13 @@ parseMove _ = Nothing
 type Depth = Int
 type Score = Int
 
-class Board a where
-  board0       :: a
-  updateBoard  :: Move -> a -> a
-  fieldIsEmpty :: a -> Coord -> Bool
-  fieldColor   :: Coord -> a -> Color
-  pieceCoord   :: Player -> Color -> a -> Coord
-  piecesCoords :: Player -> a -> [Coord]
+class Board b where
+  board0       :: b
+  updateBoard  :: b -> Move -> b
+  fieldIsEmpty :: b -> Coord -> Bool
+  fieldColor   :: b -> Coord -> Color
+  pieceCoord   :: b -> Player -> Color -> Coord
+  piecesCoords :: b -> Player -> [Coord]
 
 
 -- We don't use minBound/maxBound here because it messes with algorithms in

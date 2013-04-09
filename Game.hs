@@ -50,7 +50,7 @@ initialPosition = position0
 
 doMove :: Board b => Move -> Position b -> Position b
 doMove m Position {..} = Position
-  { pBoard  = updateBoard m pBoard
+  { pBoard  = updateBoard pBoard m
   , pPlayer = opponent pPlayer
   , pMoves  = m : pMoves
   , pMoveNo = pMoveNo + 1
@@ -119,14 +119,14 @@ possibleTos (x,y) p b = case p of
   where
     takeValid = takeWhile (fieldIsEmpty b)
 
-requiredFrom :: Board b => Move -> Position b -> Coord
-requiredFrom (Move _ to) Position{..} =
-  pieceCoord pPlayer (fieldColor to pBoard) pBoard
+requiredFrom :: Board b => Position b -> Move -> Coord
+requiredFrom Position{..} (Move _ to) =
+  pieceCoord pBoard pPlayer (fieldColor pBoard to)
 
 requiredFroms :: Board b => Position b -> [Coord]
 requiredFroms r = case pMoves r of
   []    -> initialFroms (pPlayer r)
-  m : _ -> [ requiredFrom m r ]
+  m : _ -> [ requiredFrom r m ]
 
 initialFroms :: Player -> [Coord]
 initialFroms Black = [(x,1) | x <- [1..8]]
@@ -135,7 +135,7 @@ initialFroms White = [(x,8) | x <- [1..8]]
 passMove :: Board b => Position b -> [Move]
 passMove r = case pMoves r of
   []  -> []
-  m:_ -> let from = requiredFrom m r
+  m:_ -> let from = requiredFrom r m
           in [Move from from]
 
 isPass :: Move -> Bool

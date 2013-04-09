@@ -50,7 +50,7 @@ threatBasedEval r = playerCoeff (pPlayer r) *
 attackersNumber :: Board b => Player -> b -> Int
 attackersNumber p b = length
    [ ()
-   | from <- piecesCoords p b
+   | from <- piecesCoords b p
    , not $ null $ threats p from b
    ]
 
