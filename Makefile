@@ -16,7 +16,7 @@ rebuild:
 	ghc -fforce-recomp -O2 -Wall $(PROG).hs
 
 run:	build
-	sh -c "time ./$PROG -d 7"
+	sh -c "time ./${PROG} -d 11"
 
 test:
 	ghc -O2 -Wall Tests.hs
