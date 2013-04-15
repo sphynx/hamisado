@@ -168,3 +168,22 @@ Params: mode=LosingMoves, algo=Negascout, implementation=My, depth=17
 Time:   122.05s
 
 
+# with merge instead of sort (and with more polymorphism than needed)
+
+Params: mode=LosingMoves, algo=Negascout, implementation=My, depth=7
+Time:   0.50s
+
+Params: mode=LosingMoves, algo=Negascout, implementation=My, depth=9
+Time:   2.17s
+
+Params: mode=LosingMoves, algo=Negascout, implementation=My, depth=11
+Time:   7.68s
+
+Params: mode=LosingMoves, algo=Negascout, implementation=My, depth=13
+Time:   22.15s
+
+Params: mode=LosingMoves, algo=Negascout, implementation=My, depth=15
+Time:   53.56s
+
+Params: mode=LosingMoves, algo=Negascout, implementation=My, depth=17
+Time:   97.40s
